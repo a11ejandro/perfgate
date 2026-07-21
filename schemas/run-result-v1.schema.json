@@ -1,0 +1,7 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://baseline.dev/schemas/run-result-v1.schema.json",
+  "title": "Baseline Run Result v1",
+  "description": "Placeholder schema. To be defined per section 14.1 of the technical specification.",
+  "type": "object"
+}
