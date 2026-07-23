@@ -1,6 +1,10 @@
 AllCops:
   TargetRubyVersion: 3.1
   NewCops: enable
+  # Exploratory Milestone 0 spikes are throwaway scripts, not held to the
+  # same design/style bar as the gem itself.
+  Exclude:
+    - "spikes/**/*"
 
 Style/StringLiterals:
   Enabled: true
