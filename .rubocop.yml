@@ -16,3 +16,10 @@ Style/StringLiteralsInInterpolation:
 
 Layout/LineLength:
   Max: 120
+
+# RSpec example groups naturally group many small `it` blocks together;
+# the default limit is tuned for regular method bodies, not spec files.
+Metrics/BlockLength:
+  Exclude:
+    - "spec/**/*"
+    - "*.gemspec"

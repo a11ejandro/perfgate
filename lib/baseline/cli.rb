@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
 module Baseline
-  # Entry point for the `baseline` executable. Subcommands (init, run,
-  # compare, report, doctor, schema) will be implemented as part of the
-  # Milestone 1 build-out described in the project roadmap.
+  # Entry point for the `baseline` executable. Only `run` is implemented
+  # so far (Milestone 1); `init`, `compare`, `report`, `doctor`, and
+  # `schema` are planned for later milestones (spec section 10).
   class CLI
     def self.start(argv)
       new(argv).run
@@ -14,7 +14,34 @@ module Baseline
     end
 
     def run
-      warn "baseline: no subcommands implemented yet"
+      dispatch(*@argv)
+    rescue Baseline::Error => e
+      warn "baseline: #{e.message}"
+      1
+    end
+
+    private
+
+    def dispatch(command = nil, *rest)
+      case command
+      when "run" then run_run_command(rest)
+      when nil then usage
+      else unknown_command(command)
+      end
+    end
+
+    def run_run_command(rest)
+      require_relative "cli/run_command"
+      RunCommand.new(rest).call
+    end
+
+    def usage
+      warn "usage: baseline <command> [options]"
+      1
+    end
+
+    def unknown_command(command)
+      warn "baseline: unknown or not-yet-implemented command #{command.inspect}"
       1
     end
   end
