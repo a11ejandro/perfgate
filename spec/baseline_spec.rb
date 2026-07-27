@@ -11,12 +11,12 @@ RSpec.describe Baseline do
     end
 
     it "records the block's duration on the active sample context" do
-      context = Baseline::Execution::SampleContext.new
+      context = Baseline::Execution::SampleContext.new(metrics: [:duration])
       Baseline::Execution::SampleContext.current = context
 
       described_class.measure { sleep 0.01 }
 
-      expect(context.explicit_duration_seconds).to be >= 0.01
+      expect(context.data["duration_ns"]).to be >= 10_000_000
     ensure
       Baseline::Execution::SampleContext.current = nil
     end

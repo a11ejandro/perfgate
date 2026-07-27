@@ -3,8 +3,8 @@
 require "baseline/execution/runner"
 
 RSpec.describe Baseline::Execution::Runner do
-  def workload(samples: 3, warmup: 1, &block)
-    Baseline::Workloads::Workload.new(id: "w", samples: samples, warmup: warmup, metrics: [:duration], &block)
+  def workload(samples: 3, warmup: 1, metrics: [:duration], &block)
+    Baseline::Workloads::Workload.new(id: "w", samples: samples, warmup: warmup, metrics: metrics, &block)
   end
 
   it "runs warmup iterations plus the configured number of measured samples" do
@@ -29,6 +29,25 @@ RSpec.describe Baseline::Execution::Runner do
     ).call
 
     expect(load_result["samples"].first["duration_ns"]).to be >= 0
+  end
+
+  it "only collects allocation counts for code inside the Baseline.measure block" do
+    result = described_class.new(
+      workload(samples: 1, warmup: 0, metrics: %i[duration allocations]) do
+        Array.new(500) { Object.new } # outside the measured block: must not be counted
+        Baseline.measure { Array.new(3) { Object.new } }
+      end
+    ).call
+
+    expect(result["samples"].first["allocations"]).to be_between(3, 20)
+  end
+
+  it "reports no non-duration metrics when Baseline.measure is never called" do
+    result = described_class.new(
+      workload(samples: 1, warmup: 0, metrics: %i[duration allocations sql_count]) { Array.new(500) { Object.new } }
+    ).call
+
+    expect(result["samples"].first.keys).to eq(["duration_ns"])
   end
 
   it "reports a failing workload as status: error instead of raising" do

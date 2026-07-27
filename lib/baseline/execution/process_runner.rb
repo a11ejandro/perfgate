@@ -11,6 +11,12 @@ module Baseline
     # is deliberately avoided per the project's cross-process
     # serialization policy (data crossing a process boundary must not be
     # able to instantiate arbitrary Ruby objects).
+    #
+    # Note for database-backed workloads: an in-memory SQLite database
+    # does not survive fork (each child effectively starts with an empty
+    # database), so process isolation requires a file-based or
+    # server-based test database. This mirrors an existing constraint on
+    # Rails' own parallel test runners and isn't specific to Baseline.
     class ProcessRunner
       def initialize(workload, runner_class: Runner)
         @workload = workload

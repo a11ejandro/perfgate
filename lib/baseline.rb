@@ -16,14 +16,11 @@ module Baseline
     # Baseline (spec section 9.1). Outside of a running workload sample
     # (e.g. called directly in a plain unit test) this simply executes
     # the block and returns its value without recording anything.
-    def measure
+    def measure(&block)
       context = Execution::SampleContext.current
-      return yield unless context
+      return block.call unless context
 
-      start = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-      result = yield
-      context.record_duration_seconds(Process.clock_gettime(Process::CLOCK_MONOTONIC) - start)
-      result
+      context.measure(&block)
     end
 
     # The active configuration, loaded via Config.load or Config.default.

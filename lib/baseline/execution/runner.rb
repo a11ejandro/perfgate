@@ -6,9 +6,11 @@ module Baseline
   module Execution
     # Executes a single workload's warmup and measured samples in the
     # current process (spec section 12.2, steps 4-9). Process isolation
-    # across workloads is layered on top by ProcessRunner. Only the
-    # duration metric is collected in Milestone 1; SQL/allocation/GC
-    # collectors are added in Milestone 2.
+    # across workloads is layered on top by ProcessRunner. SQL count/
+    # duration, allocations, and GC deltas are collected only inside the
+    # workload's explicit `Baseline.measure` block; duration falls back
+    # to wall-clock timing of the whole workload when `Baseline.measure`
+    # is never called (spec section 13.1).
     #
     # A failed assertion or raised exception inside the workload is an
     # execution error, not a performance regression (spec section 12.2):
@@ -32,16 +34,18 @@ module Baseline
       private
 
       def run_once
-        duration_seconds = nil
+        data = nil
 
-        SampleContext.with_new do |context|
-          start = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+        SampleContext.with_new(metrics: @workload.metrics) do |context|
+          wall_start = Process.clock_gettime(Process::CLOCK_MONOTONIC)
           @workload.call
-          wall_elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - start
-          duration_seconds = context.explicit_duration_seconds || wall_elapsed
+          wall_elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - wall_start
+
+          data = context.data.dup
+          data["duration_ns"] ||= (wall_elapsed * 1_000_000_000).round
         end
 
-        { "duration_ns" => (duration_seconds * 1_000_000_000).round }
+        data
       end
     end
   end

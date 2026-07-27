@@ -34,6 +34,23 @@ RSpec.describe Baseline::Serialization::RunResult do
       expect(built["summary"]["duration_ns"]["mean"]).to eq(150)
     end
 
+    it "attaches a summary block for every metric key present in the samples" do
+      workload_result = {
+        "id" => "spec/foo_spec.rb:does a thing",
+        "status" => "completed",
+        "error" => nil,
+        "samples" => [
+          { "duration_ns" => 100, "sql_count" => 2, "allocations" => 10 },
+          { "duration_ns" => 200, "sql_count" => 4, "allocations" => 20 }
+        ]
+      }
+
+      summary = described_class.build([workload_result])["workloads"].first["summary"]
+
+      expect(summary.keys).to contain_exactly("duration_ns", "sql_count", "allocations")
+      expect(summary["sql_count"]["mean"]).to eq(3)
+    end
+
     it "omits the summary for a workload with no samples" do
       workload_result = { "id" => "errored", "status" => "error", "error" => "boom", "samples" => [] }
 

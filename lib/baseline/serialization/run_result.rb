@@ -26,15 +26,29 @@ module Baseline
 
       def build_workload(result)
         samples = result.fetch("samples")
-        durations = samples.map { |sample| sample.fetch("duration_ns") }
 
         {
           "id" => result.fetch("id"),
           "status" => result.fetch("status"),
           "error" => result["error"],
           "samples" => samples,
-          "summary" => durations.empty? ? {} : { "duration_ns" => Statistics::Summary.call(durations) }
+          "summary" => summarize(samples)
         }
+      end
+
+      # Every metric key present in at least one sample gets its own
+      # summary block (spec section 14.1 shows this for duration_ns, but
+      # the same shape applies to sql_count, sql_duration_ns, etc. once
+      # those metrics are enabled).
+      def summarize(samples)
+        metric_keys(samples).each_with_object({}) do |key, summary|
+          values = samples.map { |sample| sample[key] }.compact
+          summary[key] = Statistics::Summary.call(values)
+        end
+      end
+
+      def metric_keys(samples)
+        samples.each_with_object([]) { |sample, keys| keys.concat(sample.keys) }.uniq
       end
     end
   end
