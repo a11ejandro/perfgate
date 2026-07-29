@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
 module Baseline
-  # Entry point for the `baseline` executable. Only `run` is implemented
-  # so far (Milestone 1); `init`, `compare`, `report`, `doctor`, and
+  # Entry point for the `baseline` executable. `run` and `compare` are
+  # implemented (Milestones 1-4); `init`, `report`, `doctor`, and
   # `schema` are planned for later milestones (spec section 10).
   class CLI
     def self.start(argv)

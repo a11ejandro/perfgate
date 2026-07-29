@@ -12,9 +12,10 @@ decision.
 See [baseline_oss_mvp_technical_spec_and_roadmap.md](../baseline_oss_mvp_technical_spec_and_roadmap.md)
 for the full product and technical specification driving this implementation.
 
-**Status:** Early development. `baseline init`, `run`, and `compare` are
-implemented and covered by tests; see the roadmap for what's still missing
-before a public MVP release.
+**Status:** Early development. `run` and `compare` are implemented and
+covered by tests; `init`, `report`, `doctor`, and `schema` are not yet
+built. See the roadmap for what's still missing before a public MVP
+release.
 
 ## Installation
 
@@ -22,13 +23,30 @@ Not yet published to RubyGems.org. To use during development, add to your
 Gemfile pointing at a local path or git ref:
 
 ```ruby
-gem "baseline", path: "../baseline"
+gem "baseline", path: "../baseline", group: :test
 ```
 
 ## Usage
 
+Tag an RSpec example with `baseline: true` and wrap the part you want
+measured in `Baseline.measure`:
+
+```ruby
+RSpec.describe "Checkout", type: :request, baseline: true do
+  it "creates an order" do
+    sign_in(create(:user))
+    cart = create(:cart, :with_line_items)
+
+    Baseline.measure { post "/checkout", params: { cart_id: cart.id } }
+
+    expect(response).to have_http_status(:created)
+  end
+end
+```
+
+Then run it:
+
 ```bash
-bundle exec baseline init
 bundle exec baseline run --output .baseline/current
 bundle exec baseline compare --baseline .baseline/main --candidate .baseline/current
 ```
@@ -46,6 +64,7 @@ bundle exec baseline run \
 
 This writes a `summary.md` file into `--output` alongside the run bundle, so
 it can be published as a GitHub Actions job summary. See
+[docs/onboarding.md](docs/onboarding.md) for a full walkthrough and
 [examples/rails-rspec-app](examples/rails-rspec-app) for a full example
 workflow, including the artifact download/upload steps that carry a baseline
 result between CI runs.
