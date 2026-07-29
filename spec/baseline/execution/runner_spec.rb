@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "baseline/execution/runner"
+require "baseline/workloads/workload"
 
 RSpec.describe Baseline::Execution::Runner do
   def workload(samples: 3, warmup: 1, metrics: [:duration], &block)
@@ -21,6 +22,14 @@ RSpec.describe Baseline::Execution::Runner do
     expect(result["status"]).to eq("completed")
     expect(result["error"]).to be_nil
     result["samples"].each { |sample| expect(sample["duration_ns"]).to be_a(Integer).and be >= 0 }
+  end
+
+  it "attaches the workload's definition_hash regardless of outcome" do
+    completed = described_class.new(workload { 1 }).call
+    errored = described_class.new(workload { raise "boom" }).call
+
+    expect(completed["definition_hash"]).to start_with("sha256:")
+    expect(errored["definition_hash"]).to eq(completed["definition_hash"])
   end
 
   it "prefers an explicit Baseline.measure duration over the wall-clock measurement" do

@@ -51,6 +51,24 @@ RSpec.describe Baseline::Serialization::RunResult do
       expect(summary["sql_count"]["mean"]).to eq(3)
     end
 
+    it "attaches a fingerprint block describing the run environment" do
+      result = described_class.build([])
+
+      expect(result["fingerprint"]).to be_a(Hash)
+      expect(result["fingerprint"]["ruby_engine"]).to eq(RUBY_ENGINE)
+    end
+
+    it "carries through a workload's definition_hash when present" do
+      workload_result = {
+        "id" => "spec/foo_spec.rb:does a thing", "status" => "completed", "error" => nil,
+        "samples" => [{ "duration_ns" => 100 }], "definition_hash" => "sha256:abc"
+      }
+
+      built = described_class.build([workload_result])["workloads"].first
+
+      expect(built["definition_hash"]).to eq("sha256:abc")
+    end
+
     it "omits the summary for a workload with no samples" do
       workload_result = { "id" => "errored", "status" => "error", "error" => "boom", "samples" => [] }
 

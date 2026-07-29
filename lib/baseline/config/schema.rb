@@ -29,6 +29,7 @@ module Baseline
         comparison: {
           minimum_samples: true,
           confidence_level: true,
+          noise_ratio_threshold: true,
           practical_thresholds: {
             duration: { warning_percent: true, failure_percent: true, minimum_absolute_ms: true },
             sql_count: { warning_absolute: true, failure_percent: true },

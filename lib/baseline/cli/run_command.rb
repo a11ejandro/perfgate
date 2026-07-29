@@ -38,13 +38,13 @@ module Baseline
         config
       end
 
-      def execute(_config)
+      def execute(config)
         require "baseline/rspec"
         load_spec_files
         Baseline::RSpec::Discovery.call
 
         results = Baseline.registry.map { |workload| Execution::ProcessRunner.new(workload).call }
-        Serialization::RunResult.build(results)
+        Serialization::RunResult.build(results, config: config)
       end
 
       def save(config, run_result)

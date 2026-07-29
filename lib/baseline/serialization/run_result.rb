@@ -3,23 +3,25 @@
 require "securerandom"
 require "time"
 require_relative "../statistics/summary"
+require_relative "../fingerprints/components"
 
 module Baseline
   module Serialization
     # Builds the schema_version 1 run-result document described in spec
-    # section 14.1. Milestone 1 only populates the duration metric;
-    # SQL/allocation/GC fields are added in Milestone 2, and
-    # fingerprint/source metadata are added in Milestone 5.
+    # section 14.1. Milestone 5 will add source metadata; fingerprinting
+    # (spec section 15) is populated here so the comparison engine can
+    # decide compatibility without re-deriving it from scratch.
     module RunResult
       SCHEMA_VERSION = 1
 
       module_function
 
-      def build(workload_results)
+      def build(workload_results, config: Baseline.configuration)
         {
           "schema_version" => SCHEMA_VERSION,
           "run_id" => SecureRandom.uuid,
           "created_at" => Time.now.utc.iso8601,
+          "fingerprint" => Fingerprints::Components.collect(config: config),
           "workloads" => workload_results.map { |result| build_workload(result) }
         }
       end
@@ -31,6 +33,7 @@ module Baseline
           "id" => result.fetch("id"),
           "status" => result.fetch("status"),
           "error" => result["error"],
+          "definition_hash" => result["definition_hash"],
           "samples" => samples,
           "summary" => summarize(samples)
         }

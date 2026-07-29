@@ -31,6 +31,13 @@ module Baseline
         comparison: {
           minimum_samples: 5,
           confidence_level: 0.95,
+          # How much of a metric's own noise (MAD relative to its median)
+          # we tolerate before treating a would-be "fail" as unreliable
+          # and downgrading it to "warn" instead (spec 16.5). The spec
+          # calls for noise-aware downgrading but doesn't name a default
+          # ratio, so 0.5 (MAD up to half the median) was chosen as a
+          # conservative starting point pending real-world tuning.
+          noise_ratio_threshold: 0.5,
           practical_thresholds: {
             duration: { warning_percent: 10, failure_percent: 20, minimum_absolute_ms: 10 },
             sql_count: { warning_absolute: 1, failure_percent: 20 },

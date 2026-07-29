@@ -3,6 +3,7 @@
 require "digest"
 require "fileutils"
 require "json"
+require "securerandom"
 require_relative "adapter"
 
 module Baseline
@@ -12,9 +13,7 @@ module Baseline
     #   <root>/runs/<run-id>/manifest.json
     #   <root>/runs/<run-id>/run.json
     #   <root>/runs/<run-id>/checksums.json
-    #
-    # `save_comparison` and filtering in `list_runs` are deferred: the
-    # comparison engine isn't implemented until a later milestone.
+    #   <root>/comparisons/<comparison-id>.json
     class Filesystem < Adapter
       def initialize(root:)
         super()
@@ -52,7 +51,14 @@ module Baseline
       end
 
       def save_comparison(comparison_result)
-        raise NotImplementedError, "comparison storage is not implemented yet"
+        dir = File.join(@root, "comparisons")
+        FileUtils.mkdir_p(dir)
+
+        comparison_id = SecureRandom.uuid
+        path = File.join(dir, "#{comparison_id}.json")
+        File.write(path, JSON.pretty_generate(comparison_result))
+
+        path
       end
 
       private

@@ -31,6 +31,13 @@ module Baseline
 
     attr_writer :configuration
 
+    # Yields the active configuration for in-code customization, e.g.
+    # `Baseline.configure { |config| config.dataset_fingerprint = -> { ... } }`
+    # (spec section 12.3).
+    def configure
+      yield configuration
+    end
+
     # The process-wide workload registry that RSpec discovery populates.
     def registry
       Workloads::Registry.instance

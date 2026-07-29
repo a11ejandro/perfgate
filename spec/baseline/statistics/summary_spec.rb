@@ -5,7 +5,9 @@ require "baseline/statistics/summary"
 RSpec.describe Baseline::Statistics::Summary do
   describe ".call" do
     it "returns zeroed stats for an empty sample set" do
-      expect(described_class.call([])).to eq("mean" => 0, "median" => 0, "mad" => 0, "p90" => 0)
+      expect(described_class.call([])).to eq(
+        "mean" => 0, "median" => 0, "min" => 0, "max" => 0, "mad" => 0, "p90" => 0, "count" => 0
+      )
     end
 
     it "computes mean and median for an odd-sized sample set" do
@@ -13,6 +15,14 @@ RSpec.describe Baseline::Statistics::Summary do
 
       expect(summary["mean"]).to eq(20)
       expect(summary["median"]).to eq(20)
+    end
+
+    it "reports min, max, and count alongside the central tendency stats" do
+      summary = described_class.call([10, 20, 30])
+
+      expect(summary["min"]).to eq(10)
+      expect(summary["max"]).to eq(30)
+      expect(summary["count"]).to eq(3)
     end
 
     it "interpolates the median for an even-sized sample set" do

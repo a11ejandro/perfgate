@@ -3,7 +3,8 @@
 module Baseline
   module Statistics
     # Basic summary statistics for a set of raw sample values, used to
-    # populate the `summary` block of a run result (spec section 14.1).
+    # populate the `summary` block of a run result (spec sections 14.1
+    # and 16.2).
     module Summary
       module_function
 
@@ -13,9 +14,15 @@ module Baseline
         sorted = values.sort
         med = median(sorted)
 
+        central_tendency(values, sorted, med).merge("count" => values.size)
+      end
+
+      def central_tendency(values, sorted, med)
         {
           "mean" => mean(values).round,
           "median" => med.round,
+          "min" => sorted.first.round,
+          "max" => sorted.last.round,
           "mad" => mad(sorted, med).round,
           "p90" => percentile(sorted, 90).round
         }
@@ -46,7 +53,7 @@ module Baseline
       end
 
       def empty
-        { "mean" => 0, "median" => 0, "mad" => 0, "p90" => 0 }
+        { "mean" => 0, "median" => 0, "min" => 0, "max" => 0, "mad" => 0, "p90" => 0, "count" => 0 }
       end
     end
   end

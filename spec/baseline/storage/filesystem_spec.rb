@@ -73,8 +73,21 @@ RSpec.describe Baseline::Storage::Filesystem do
   end
 
   describe "#save_comparison" do
-    it "is not implemented yet" do
-      expect { storage.save_comparison({}) }.to raise_error(NotImplementedError)
+    it "writes the comparison document under comparisons/<comparison-id>.json" do
+      comparison_result = { "schema_version" => 1, "baseline_run_id" => "b", "candidate_run_id" => "c",
+                            "decision" => "pass" }
+
+      path = storage.save_comparison(comparison_result)
+
+      expect(path).to match(%r{comparisons/[0-9a-f-]{36}\.json\z})
+      expect(JSON.parse(File.read(path))).to eq(comparison_result)
+    end
+
+    it "generates a distinct comparison id on each call" do
+      first = storage.save_comparison({ "decision" => "pass" })
+      second = storage.save_comparison({ "decision" => "pass" })
+
+      expect(first).not_to eq(second)
     end
   end
 end

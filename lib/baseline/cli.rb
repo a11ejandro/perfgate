@@ -15,6 +15,12 @@ module Baseline
 
     def run
       dispatch(*@argv)
+    rescue Baseline::ConfigurationError => e
+      warn "baseline: #{e.message}"
+      2
+    rescue Baseline::ResultBundleError, Baseline::WorkloadError => e
+      warn "baseline: #{e.message}"
+      3
     rescue Baseline::Error => e
       warn "baseline: #{e.message}"
       1
@@ -25,6 +31,7 @@ module Baseline
     def dispatch(command = nil, *rest)
       case command
       when "run" then run_run_command(rest)
+      when "compare" then run_compare_command(rest)
       when nil then usage
       else unknown_command(command)
       end
@@ -33,6 +40,11 @@ module Baseline
     def run_run_command(rest)
       require_relative "cli/run_command"
       RunCommand.new(rest).call
+    end
+
+    def run_compare_command(rest)
+      require_relative "cli/compare_command"
+      CompareCommand.new(rest).call
     end
 
     def usage

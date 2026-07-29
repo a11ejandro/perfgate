@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "sample_context"
+require_relative "../fingerprints/workload_definition"
 
 module Baseline
   module Execution
@@ -26,12 +27,19 @@ module Baseline
 
         samples = Array.new(@workload.samples) { run_once }
 
-        { "id" => @workload.id, "status" => "completed", "samples" => samples, "error" => nil }
+        result("completed", samples, nil)
       rescue StandardError => e
-        { "id" => @workload.id, "status" => "error", "samples" => [], "error" => "#{e.class}: #{e.message}" }
+        result("error", [], "#{e.class}: #{e.message}")
       end
 
       private
+
+      def result(status, samples, error)
+        {
+          "id" => @workload.id, "status" => status, "samples" => samples, "error" => error,
+          "definition_hash" => Fingerprints::WorkloadDefinition.hash_for(@workload)
+        }
+      end
 
       def run_once
         data = nil

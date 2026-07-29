@@ -66,10 +66,17 @@ module Baseline
       end
     end
 
+    # The default dataset fingerprint hook (spec section 12.3): apps that
+    # care about dataset drift affecting comparability can override this
+    # with a callable of their own via `Baseline.configure`.
+    DEFAULT_DATASET_FINGERPRINT = -> { ENV.fetch("BASELINE_DATASET_VERSION", "unspecified") }
+
     attr_reader :to_h
+    attr_accessor :dataset_fingerprint
 
     def initialize(hash)
       @to_h = hash
+      @dataset_fingerprint = DEFAULT_DATASET_FINGERPRINT
     end
 
     def execution_samples
@@ -92,6 +99,34 @@ module Baseline
 
     def storage_path
       to_h.dig(:storage, :path)
+    end
+
+    def comparison_minimum_samples
+      to_h.dig(:comparison, :minimum_samples)
+    end
+
+    def comparison_confidence_level
+      to_h.dig(:comparison, :confidence_level)
+    end
+
+    def comparison_noise_ratio_threshold
+      to_h.dig(:comparison, :noise_ratio_threshold)
+    end
+
+    def practical_thresholds
+      to_h.dig(:comparison, :practical_thresholds)
+    end
+
+    def fingerprint_strict_fields
+      to_h.dig(:fingerprint, :strict)
+    end
+
+    def fingerprint_informational_fields
+      to_h.dig(:fingerprint, :informational)
+    end
+
+    def policy
+      to_h.fetch(:policy)
     end
 
     def dig(*keys)
