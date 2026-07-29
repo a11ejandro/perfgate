@@ -12,8 +12,9 @@ decision.
 See [baseline_oss_mvp_technical_spec_and_roadmap.md](../baseline_oss_mvp_technical_spec_and_roadmap.md)
 for the full product and technical specification driving this implementation.
 
-**Status:** Pre-alpha. This gem is currently a skeleton; no commands are
-implemented yet. Do not use in production.
+**Status:** Early development. `baseline init`, `run`, and `compare` are
+implemented and covered by tests; see the roadmap for what's still missing
+before a public MVP release.
 
 ## Installation
 
@@ -28,10 +29,26 @@ gem "baseline", path: "../baseline"
 
 ```bash
 bundle exec baseline init
-bundle exec baseline run
+bundle exec baseline run --output .baseline/current
+bundle exec baseline compare --baseline .baseline/main --candidate .baseline/current
 ```
 
-(Not yet implemented — see the roadmap's development milestones.)
+`baseline run` also accepts `--compare PATH` to run and compare against a
+reference bundle in one step, and `--format markdown` to render a Markdown
+report instead of the console summary. Combined, this is what a CI job needs:
+
+```bash
+bundle exec baseline run \
+  --output .baseline/current \
+  --compare .baseline/reference \
+  --format markdown
+```
+
+This writes a `summary.md` file into `--output` alongside the run bundle, so
+it can be published as a GitHub Actions job summary. See
+[examples/rails-rspec-app](examples/rails-rspec-app) for a full example
+workflow, including the artifact download/upload steps that carry a baseline
+result between CI runs.
 
 ## Development
 

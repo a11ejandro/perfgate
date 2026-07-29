@@ -62,4 +62,20 @@ RSpec.describe Baseline::CLI::CompareCommand do
     expect { described_class.new(["--baseline", baseline_dir]).call }
       .to raise_error(Baseline::ConfigurationError, /requires both/)
   end
+
+  it "prints a Markdown report when --format markdown is given" do
+    baseline_dir = write_run(File.join(@tmp, "base"), [980, 1020, 990, 1010, 1000, 1030, 970, 1015].map do |v|
+      v * 100_000
+    end)
+    candidate_dir = write_run(File.join(@tmp, "cand"), [985, 1025, 995, 1005, 1000, 1035, 975, 1010].map do |v|
+      v * 100_000
+    end)
+
+    expect do
+      described_class.new(
+        ["--baseline", baseline_dir, "--candidate", candidate_dir, "--output", File.join(@tmp, "output"),
+         "--format", "markdown"]
+      ).call
+    end.to output(/## Baseline Performance Assurance/).to_stdout
+  end
 end

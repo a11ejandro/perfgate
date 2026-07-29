@@ -5,6 +5,7 @@ require "fileutils"
 require "json"
 require "securerandom"
 require_relative "adapter"
+require_relative "archive"
 
 module Baseline
   module Storage
@@ -59,6 +60,29 @@ module Baseline
         File.write(path, JSON.pretty_generate(comparison_result))
 
         path
+      end
+
+      # Packs a run bundle's directory into the portable
+      # baseline-run-<run-id>.tar.gz format (spec 18.2), for manual
+      # transfer or storage outside the filesystem adapter's own root
+      # (e.g. as a CI artifact). Returns the archive's path.
+      def export_archive(run_id, into: @root)
+        dir = run_directory(run_id)
+        raise Baseline::ResultBundleError, "no run bundle found at #{dir}" unless File.directory?(dir)
+
+        FileUtils.mkdir_p(into)
+        archive_path = File.join(into, "baseline-run-#{run_id}.tar.gz")
+        Archive.write(archive_path, dir, run_id)
+        archive_path
+      end
+
+      # Unpacks a baseline-run-<run-id>.tar.gz archive into `into`,
+      # rejecting any entry that would escape the destination directory
+      # (spec 22: reject path traversal in archives). Returns the
+      # extracted run directory path.
+      def import_archive(archive_path, into: @root)
+        Archive.extract(archive_path, into)
+        File.join(into, "runs", File.basename(archive_path, ".tar.gz").sub(/^baseline-run-/, ""))
       end
 
       private

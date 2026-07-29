@@ -1,0 +1,48 @@
+name: Baseline
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  baseline:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+
+      # The MVP has no artifact-lookup helper (spec 19.1), so this just
+      # grabs whatever the main branch's most recent workflow run
+      # uploaded under this fixed artifact name. continue-on-error
+      # covers the very first run on a repository, where no such
+      # artifact exists yet -- baseline run then falls back to treating
+      # the comparison as a missing baseline instead of failing.
+      - name: Download default-branch Baseline
+        if: github.event_name == 'pull_request'
+        uses: actions/download-artifact@v4
+        with:
+          name: baseline-main
+          path: .baseline/reference
+        continue-on-error: true
+
+      - name: Run Baseline
+        run: |
+          bundle exec baseline run \
+            --output .baseline/current \
+            --compare .baseline/reference \
+            --format markdown
+
+      - name: Publish summary
+        if: always()
+        run: cat .baseline/current/summary.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload default-branch Baseline
+        if: github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v4
+        with:
+          name: baseline-main
+          path: .baseline/current

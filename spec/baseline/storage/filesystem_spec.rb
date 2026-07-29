@@ -2,6 +2,9 @@
 
 require "tmpdir"
 require "fileutils"
+require "rubygems/package"
+require "stringio"
+require "zlib"
 require "baseline/storage/filesystem"
 
 RSpec.describe Baseline::Storage::Filesystem do
@@ -89,5 +92,42 @@ RSpec.describe Baseline::Storage::Filesystem do
 
       expect(first).not_to eq(second)
     end
+  end
+
+  describe "#export_archive / #import_archive" do
+    it "round-trips a run bundle through a baseline-run-<run-id>.tar.gz archive" do
+      storage.save_run(run_result)
+
+      archive_path = storage.export_archive(run_result["run_id"])
+      expect(archive_path).to eq(File.join(@root, "baseline-run-#{run_result["run_id"]}.tar.gz"))
+
+      into = Dir.mktmpdir
+      other = described_class.new(root: into)
+      run_dir = other.import_archive(archive_path, into: into)
+
+      expect(other.load_run(run_dir)).to eq(run_result)
+    ensure
+      FileUtils.remove_entry(into) if into
+    end
+
+    it "raises ResultBundleError when exporting a run that does not exist" do
+      expect { storage.export_archive("does-not-exist") }.to raise_error(Baseline::ResultBundleError, /no run bundle/)
+    end
+
+    it "rejects an archive entry that attempts path traversal on import" do
+      archive_path = File.join(@root, "malicious.tar.gz")
+      write_malicious_archive(archive_path)
+
+      expect { storage.import_archive(archive_path, into: @root) }
+        .to raise_error(Baseline::ResultBundleError, /escapes the destination directory/)
+    end
+  end
+
+  def write_malicious_archive(archive_path)
+    tar_io = StringIO.new
+    Gem::Package::TarWriter.new(tar_io) do |tar|
+      tar.add_file("../../etc/evil.json", 0o644) { |io| io.write("{}") }
+    end
+    Zlib::GzipWriter.open(archive_path) { |gz| gz.write(tar_io.string) }
   end
 end

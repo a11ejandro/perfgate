@@ -5,15 +5,19 @@ require_relative "../config"
 require_relative "../execution/process_runner"
 require_relative "../serialization/run_result"
 require_relative "../storage/filesystem"
+require_relative "run_comparison_reporter"
 
 module Baseline
   class CLI
     # Implements `baseline run` (spec section 10.2): discovers workloads
     # via the RSpec integration, executes each workload's warmup+samples
     # in an isolated child process, and writes a filesystem result
-    # bundle. Comparing against a previous bundle (--compare) belongs to
-    # a later milestone; only local execution + serialization exists so
-    # far.
+    # bundle. With --compare PATH, immediately compares the fresh run
+    # against a reference bundle and reports/exits like `baseline
+    # compare` would -- this is the single combined step the spec's
+    # GitHub Actions example (section 19.1) invokes. --format markdown
+    # additionally writes a summary.md into the output directory for a
+    # GitHub job summary.
     class RunCommand
       def initialize(argv)
         @argv = argv.dup
@@ -26,8 +30,7 @@ module Baseline
         run_result = execute(config)
         run_dir = save(config, run_result)
 
-        report(run_result, run_dir)
-        exit_code(run_result)
+        @options[:compare] ? compare_and_report(config, run_result, run_dir) : run_only_report(run_result, run_dir)
       end
 
       private
@@ -64,6 +67,7 @@ module Baseline
           opts.on("--fail-on MODE") { |v| @options[:fail_on] = v }
           opts.on("--seed N", Integer) { |v| @options[:seed] = v }
           opts.on("--profile NAME") { |v| @options[:profile] = v }
+          opts.on("--compare PATH") { |v| @options[:compare] = v }
         end
       end
 
@@ -77,9 +81,11 @@ module Baseline
         @argv.empty? ? ["spec"] : @argv
       end
 
-      def report(run_result, run_dir)
+      def run_only_report(run_result, run_dir)
         puts "baseline run: #{run_result["workloads"].size} workload(s) -> #{run_dir}"
         run_result["workloads"].each { |workload| report_workload(workload) }
+        write_run_only_summary(run_result, run_dir)
+        exit_code(run_result)
       end
 
       def report_workload(workload)
@@ -95,6 +101,22 @@ module Baseline
 
       def exit_code(run_result)
         run_result["workloads"].any? { |w| w["status"] == "error" } ? 1 : 0
+      end
+
+      def write_run_only_summary(run_result, run_dir)
+        return unless @options[:format] == "markdown"
+
+        rows = run_result["workloads"].map { |w| "| #{w["id"]} | #{w["status"]} |" }
+        content = (["## Baseline Run", "", "No reference bundle was compared against.", "",
+                    "| Workload | Status |", "|---|---|"] + rows).join("\n")
+        File.write(File.join(run_dir, "summary.md"), content)
+      end
+
+      def compare_and_report(config, run_result, run_dir)
+        reporter = RunComparisonReporter.new(reference_path: @options[:compare],
+                                             output_root: @options[:output] || config.storage_path,
+                                             format: @options[:format])
+        reporter.call(config: config, run_result: run_result, run_dir: run_dir)
       end
     end
   end

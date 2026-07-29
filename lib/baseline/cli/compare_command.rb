@@ -5,12 +5,15 @@ require_relative "../config"
 require_relative "../comparison/engine"
 require_relative "../policy/engine"
 require_relative "../storage/filesystem"
+require_relative "../report/console"
+require_relative "../report/markdown"
 
 module Baseline
   class CLI
     # Implements `baseline compare` (spec section 10.3): loads two
     # already-produced result bundles, runs them through the comparison
-    # engine and policy engine, saves the comparison document, and exits
+    # engine and policy engine, saves the comparison document, prints a
+    # console (or Markdown, with --format markdown) report, and exits
     # with the CI exit code from spec section 17.
     class CompareCommand
       def initialize(argv)
@@ -70,17 +73,18 @@ module Baseline
           opts.on("--candidate PATH") { |v| @options[:candidate] = v }
           opts.on("--config PATH") { |v| @options[:config] = v }
           opts.on("--output PATH") { |v| @options[:output] = v }
+          opts.on("--format FORMAT") { |v| @options[:format] = v }
         end
       end
 
       def report(comparison_result, policy_result, comparison_path)
-        puts "baseline compare: #{policy_result["status"]} -> #{comparison_path}"
-        comparison_result.fetch("workloads").each { |workload| report_workload(workload) }
-      end
-
-      def report_workload(workload)
-        metrics_summary = workload.fetch("metrics").map { |name, m| "#{name}=#{m["decision"]}" }.join(", ")
-        puts "  #{workload["id"]}: #{workload["decision"]}#{" (#{metrics_summary})" unless metrics_summary.empty?}"
+        if @options[:format] == "markdown"
+          puts Report::Markdown.render(comparison_result: comparison_result, policy_result: policy_result,
+                                       comparison_path: comparison_path)
+        else
+          puts Report::Console.render(comparison_result: comparison_result, policy_result: policy_result)
+          puts "Machine-readable result: #{comparison_path}"
+        end
       end
     end
   end
