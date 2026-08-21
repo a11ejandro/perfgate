@@ -78,11 +78,11 @@ service in the loop.
 
 ```ruby
 # Gemfile
-gem "baseline", group: :test
+gem "baselined", group: :test
 ```
 
 Tag an existing request spec or job spec with `baseline: true`, wrap the
-part you care about in `Baseline.measure { ... }`, and you have your
+part you care about in `Baselined.measure { ... }`, and you have your
 first workload. See
 [docs/onboarding.md](onboarding.md) for a full walkthrough, including
 wiring up the GitHub Actions workflow.

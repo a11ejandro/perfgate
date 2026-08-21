@@ -23,13 +23,13 @@ Not yet published to RubyGems.org. To use during development, add to your
 Gemfile pointing at a local path or git ref:
 
 ```ruby
-gem "baseline", path: "../baseline", group: :test
+gem "baselined", path: "../baseline", group: :test
 ```
 
 ## Usage
 
 Tag an RSpec example with `baseline: true` and wrap the part you want
-measured in `Baseline.measure`:
+measured in `Baselined.measure`:
 
 ```ruby
 RSpec.describe "Checkout", type: :request, baseline: true do
@@ -37,7 +37,7 @@ RSpec.describe "Checkout", type: :request, baseline: true do
     sign_in(create(:user))
     cart = create(:cart, :with_line_items)
 
-    Baseline.measure { post "/checkout", params: { cart_id: cart.id } }
+    Baselined.measure { post "/checkout", params: { cart_id: cart.id } }
 
     expect(response).to have_http_status(:created)
   end
@@ -51,7 +51,7 @@ bundle exec baseline run --output .baseline/current
 bundle exec baseline compare --baseline .baseline/main --candidate .baseline/current
 ```
 
-`baseline run` also accepts `--compare PATH` to run and compare against a
+`baselined run` also accepts `--compare PATH` to run and compare against a
 reference bundle in one step, and `--format markdown` to render a Markdown
 report instead of the console summary. Combined, this is what a CI job needs:
 
@@ -68,6 +68,14 @@ it can be published as a GitHub Actions job summary. See
 [examples/rails-rspec-app](examples/rails-rspec-app) for a full example
 workflow, including the artifact download/upload steps that carry a baseline
 result between CI runs.
+
+## Docs
+
+- [Architecture](docs/architecture.md) — layered pipeline, key design decisions, how to add a metric
+- [Onboarding guide](docs/onboarding.md) — first-run walkthrough for an existing Rails/RSpec app
+- [Compatibility matrix](docs/compatibility.md) — supported Ruby, Rails, and database versions
+- [Telemetry contract](docs/telemetry.md) — what is (and is never) collected
+- [Roadmap](ROADMAP.md) — what's done, what's next, what's out of scope
 
 ## Development
 

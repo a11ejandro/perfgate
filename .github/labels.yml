@@ -1,0 +1,111 @@
+# Labels configuration for github-label-sync
+# Usage: npx github-label-sync --access-token $GITHUB_TOKEN --labels .github/labels.yml your-org/baseline
+#
+# Install: npm install -g github-label-sync
+# Dry run:  npx github-label-sync --dry-run --access-token $TOKEN --labels .github/labels.yml your-org/baseline
+
+# ── Type ──────────────────────────────────────────────────────────────────────
+
+- name: "bug"
+  color: "d73a4a"
+  description: "Something isn't working correctly"
+
+- name: "enhancement"
+  color: "a2eeef"
+  description: "New feature or improvement to an existing one"
+
+- name: "question"
+  color: "d876e3"
+  description: "Further information is requested"
+
+- name: "documentation"
+  color: "0075ca"
+  description: "Improvements or additions to docs"
+
+- name: "chore"
+  color: "e4e669"
+  description: "Maintenance, refactor, or tooling change (no user-visible effect)"
+
+# ── Priority ──────────────────────────────────────────────────────────────────
+
+- name: "priority: high"
+  color: "b60205"
+  description: "Blocks a release or affects most users"
+
+- name: "priority: low"
+  color: "e4e669"
+  description: "Nice to have; will not block a release"
+
+# ── Status ────────────────────────────────────────────────────────────────────
+
+- name: "good first issue"
+  color: "7057ff"
+  description: "Good for newcomers — well-scoped with clear acceptance criteria"
+
+- name: "help wanted"
+  color: "008672"
+  description: "Extra attention is needed; contributions especially welcome"
+
+- name: "wontfix"
+  color: "ffffff"
+  description: "This will not be worked on (see out-of-scope section in ROADMAP.md)"
+
+- name: "duplicate"
+  color: "cfd3d7"
+  description: "This issue or pull request already exists"
+
+- name: "needs: reproduction"
+  color: "e4e669"
+  description: "Cannot be investigated without a reproducible example"
+
+- name: "needs: discussion"
+  color: "e4e669"
+  description: "Requires design discussion before implementation begins"
+
+# ── Domain ────────────────────────────────────────────────────────────────────
+
+- name: "area: instrumentation"
+  color: "c5def5"
+  description: "Duration, SQL, allocations, GC, memory collectors"
+
+- name: "area: comparison"
+  color: "c5def5"
+  description: "Fingerprints, metric decisions, regression engine"
+
+- name: "area: statistics"
+  color: "c5def5"
+  description: "Mann-Whitney U, summary stats, thresholds"
+
+- name: "area: cli"
+  color: "c5def5"
+  description: "run / compare / init / doctor / report commands"
+
+- name: "area: storage"
+  color: "c5def5"
+  description: "Filesystem adapter, archive export/import"
+
+- name: "area: reporting"
+  color: "c5def5"
+  description: "Console and Markdown report formatting"
+
+- name: "area: ci"
+  color: "c5def5"
+  description: "GitHub Actions integration, artifact hand-off"
+
+- name: "area: config"
+  color: "c5def5"
+  description: "baseline.yml schema, validation, env overrides"
+
+# ── Impact ────────────────────────────────────────────────────────────────────
+
+- name: "breaking change"
+  color: "b60205"
+  description: "Changes the public API, CLI interface, or result-bundle schema"
+
+- name: "performance"
+  color: "f9d0c4"
+  description: "Affects the speed or resource use of Baseline itself"
+
+- name: "false positive / false negative"
+  color: "f9d0c4"
+  description: "Baseline produces an incorrect PASS or incorrect FAIL"

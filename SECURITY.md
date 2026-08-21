@@ -14,7 +14,7 @@ on the default branch; there is no long-term support branch yet.
 
 Please do not open a public GitHub issue for suspected security
 vulnerabilities. Instead, use GitHub's private
-[vulnerability reporting](https://github.com/baseline-oss/baseline/security/advisories/new)
+[vulnerability reporting](https://github.com/baseline-oss/baselined/security/advisories/new)
 feature, or email the maintainer directly at bendthe@gmail.com with:
 
 - a description of the issue and its potential impact;

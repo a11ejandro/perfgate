@@ -32,7 +32,7 @@ Closing this gap means:
   similar Gemfile-matrix approach;
 - adding a PostgreSQL and a MySQL service to CI and running the SQL
   instrumentation specs against both, not just SQLite;
-- verifying `baseline doctor` (once implemented) correctly classifies
+- verifying `baselined doctor` (once implemented) correctly classifies
   any of the above outside this matrix as incompatible rather than
   silently comparing.
 
