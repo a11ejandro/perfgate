@@ -23,13 +23,13 @@ Not yet published to RubyGems.org. To use during development, add to your
 Gemfile pointing at a local path or git ref:
 
 ```ruby
-gem "baselined", path: "../baseline", group: :test
+gem "perfgate", path: "../baseline", group: :test
 ```
 
 ## Usage
 
 Tag an RSpec example with `baseline: true` and wrap the part you want
-measured in `Baselined.measure`:
+measured in `Perfgate.measure`:
 
 ```ruby
 RSpec.describe "Checkout", type: :request, baseline: true do
@@ -37,7 +37,7 @@ RSpec.describe "Checkout", type: :request, baseline: true do
     sign_in(create(:user))
     cart = create(:cart, :with_line_items)
 
-    Baselined.measure { post "/checkout", params: { cart_id: cart.id } }
+    Perfgate.measure { post "/checkout", params: { cart_id: cart.id } }
 
     expect(response).to have_http_status(:created)
   end
@@ -51,7 +51,7 @@ bundle exec baseline run --output .baseline/current
 bundle exec baseline compare --baseline .baseline/main --candidate .baseline/current
 ```
 
-`baselined run` also accepts `--compare PATH` to run and compare against a
+`perfgate run` also accepts `--compare PATH` to run and compare against a
 reference bundle in one step, and `--format markdown` to render a Markdown
 report instead of the console summary. Combined, this is what a CI job needs:
 

@@ -21,7 +21,7 @@ RSpec examples
        ▼
 ┌──────────────────┐
 │ Instrumentation  │  instrumentation/{duration,sql_activity,allocations,gc}.rb
-│                  │  Wraps Baselined.measure { } with collectors for each metric
+│                  │  Wraps Perfgate.measure { } with collectors for each metric
 └────────┬─────────┘
          │  SampleContext per metric
          ▼

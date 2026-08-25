@@ -4,15 +4,15 @@ This is the walkthrough for an early adopter team installing Baseline
 for the first time, aimed squarely at Milestone 5's exit criterion:
 completing installation without the maintainer touching your repo.
 
-It reflects what's actually implemented today. `baselined init`,
+It reflects what's actually implemented today. `perfgate init`,
 `report`, `doctor`, and `schema` are not built yet -- everything below
-uses only `baselined run` and `baselined compare`.
+uses only `perfgate run` and `perfgate compare`.
 
 ## 1. Add the gem
 
 ```ruby
 # Gemfile
-gem "baselined", path: "../baseline", group: :test # or a git ref, until published
+gem "perfgate", path: "../baseline", group: :test # or a git ref, until published
 ```
 
 ```bash
@@ -29,7 +29,7 @@ policy.
 Pick one existing request spec, job spec, or similar RSpec example
 that exercises a code path you care about. Add `baseline: true` to its
 metadata, and wrap only the part you want measured in
-`Baselined.measure`:
+`Perfgate.measure`:
 
 ```ruby
 RSpec.describe "Checkout", type: :request, baseline: true do
@@ -37,7 +37,7 @@ RSpec.describe "Checkout", type: :request, baseline: true do
     sign_in(create(:user))
     cart = create(:cart, :with_line_items)
 
-    Baselined.measure do
+    Perfgate.measure do
       post "/checkout", params: { cart_id: cart.id }
     end
 
@@ -46,7 +46,7 @@ RSpec.describe "Checkout", type: :request, baseline: true do
 end
 ```
 
-Only code inside `Baselined.measure` is timed and has its SQL/allocation
+Only code inside `Perfgate.measure` is timed and has its SQL/allocation
 metrics collected -- sign-in, fixture creation, and response assertions
 outside the block are excluded on purpose (spec section 9.3).
 

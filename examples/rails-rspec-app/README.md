@@ -7,7 +7,7 @@ specification). The full app is not yet scaffolded.
 `spec/requests/checkout_spec.rb` and `spec/jobs/invoice_job_spec.rb`
 are illustrative workload examples (Milestone 2 deliverables: a
 request-spec example and a job-spec example, spec section 13.7). They
-show the intended `baseline:`-tagged, `Baselined.measure`-wrapped shape
+show the intended `baseline:`-tagged, `Perfgate.measure`-wrapped shape
 once a real Rails app backs this directory; they are not executed by
 CI yet since there's no app for them to run against.
 

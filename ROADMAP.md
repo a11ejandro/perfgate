@@ -9,10 +9,10 @@ Status key: ✅ done · 🚧 in progress · ⬜ not started
 
 ## Phase 1 — Implemented (MVP core)
 
-✅ `baselined run` — discovers `:baseline`-tagged RSpec examples, runs warmups
+✅ `perfgate run` — discovers `:baseline`-tagged RSpec examples, runs warmups
    + measured samples in subprocess isolation, writes a versioned JSON result bundle
 
-✅ `baselined compare` — loads two result bundles, validates fingerprint
+✅ `perfgate compare` — loads two result bundles, validates fingerprint
    compatibility, produces per-workload PASS/WARN/FAIL/INCOMPARABLE decisions,
    saves a comparison result, exits with CI-meaningful codes
 
@@ -48,16 +48,16 @@ Status key: ✅ done · 🚧 in progress · ⬜ not started
 
 ## Phase 2 — Pre-release polish
 
-⬜ `baselined init` — scaffold `baseline.yml` with commented defaults and an
+⬜ `perfgate init` — scaffold `baseline.yml` with commented defaults and an
    example workload block; the spec describes it but it is not yet built
 
-⬜ `baselined doctor` — pre-flight check: Ruby/Rails version, RSpec integration
+⬜ `perfgate doctor` — pre-flight check: Ruby/Rails version, RSpec integration
    presence, storage directory writability, config validity
 
-⬜ `baselined schema` — print the canonical JSON Schema for run-result or
+⬜ `perfgate schema` — print the canonical JSON Schema for run-result or
    comparison-result to stdout; useful for tooling integration
 
-⬜ `baselined report` — re-render a saved comparison result in any supported
+⬜ `perfgate report` — re-render a saved comparison result in any supported
    format without re-running workloads
 
 ⬜ Expanded CI matrix — test against Ruby 3.2/3.3/3.4 and
@@ -82,7 +82,7 @@ Status key: ✅ done · 🚧 in progress · ⬜ not started
 ⬜ Memory delta metric (opt-in) — process RSS delta per sample; gated behind
    `metrics.memory: true` because RSS is noisy on most platforms
 
-⬜ Sidekiq adapter — first-class `Baselined.measure { MyWorker.drain }` helper
+⬜ Sidekiq adapter — first-class `Perfgate.measure { MyWorker.drain }` helper
    that suppresses Sidekiq's own threading and logging noise
 
 ⬜ VS Code / RubyMine run-configuration snippets in the example app

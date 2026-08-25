@@ -1,7 +1,7 @@
 ## [Unreleased]
 
 - Core execution engine: CLI, configuration loader, RSpec discovery
-  via `baseline: true` metadata, `Baselined.measure`, process-isolated
+  via `baseline: true` metadata, `Perfgate.measure`, process-isolated
   warmup/samples, and a filesystem result bundle.
 - Rails metrics: SQL query count/duration, allocations, and GC
   diagnostics, correctly isolated to the measurement block.
