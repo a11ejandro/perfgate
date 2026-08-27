@@ -13,7 +13,7 @@ Gem::Specification.new do |spec|
                      "workloads, measures application-level signals (duration, SQL activity, " \
                      "allocations, GC), compares a pull request against a compatible " \
                      "default-branch baseline, and produces a clear CI merge-gate decision."
-  spec.homepage = "https://github.com/baseline-oss/perfgate"
+  spec.homepage = "https://github.com/a11ejandro/perfgate"
   spec.license = "Apache-2.0"
   spec.required_ruby_version = ">= 3.1.0"
 
