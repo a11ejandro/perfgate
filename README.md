@@ -1,6 +1,6 @@
-# Baseline
+# Perfgate
 
-Baseline is an open-source, CI-native performance assurance tool for Ruby on
+Perfgate is an open-source, CI-native performance assurance tool for Ruby on
 Rails applications. It converts selected RSpec examples into repeatable
 performance workloads, measures application-level signals (duration, SQL
 activity, allocations, GC), compares a pull request against a compatible
@@ -9,30 +9,21 @@ decision.
 
 > Did this change introduce a material, reproducible performance regression?
 
-See [baseline_oss_mvp_technical_spec_and_roadmap.md](../baseline_oss_mvp_technical_spec_and_roadmap.md)
-for the full product and technical specification driving this implementation.
-
-**Status:** Early development. `run` and `compare` are implemented and
-covered by tests; `init`, `report`, `doctor`, and `schema` are not yet
-built. See the roadmap for what's still missing before a public MVP
-release.
-
 ## Installation
 
-Not yet published to RubyGems.org. To use during development, add to your
-Gemfile pointing at a local path or git ref:
+Add to your Gemfile:
 
 ```ruby
-gem "perfgate", path: "../baseline", group: :test
+gem "perfgate", group: :test
 ```
 
 ## Usage
 
-Tag an RSpec example with `baseline: true` and wrap the part you want
+Tag an RSpec example with `perfgate: true` and wrap the part you want
 measured in `Perfgate.measure`:
 
 ```ruby
-RSpec.describe "Checkout", type: :request, baseline: true do
+RSpec.describe "Checkout", type: :request, perfgate: true do
   it "creates an order" do
     sign_in(create(:user))
     cart = create(:cart, :with_line_items)
@@ -47,8 +38,8 @@ end
 Then run it:
 
 ```bash
-bundle exec baseline run --output .baseline/current
-bundle exec baseline compare --baseline .baseline/main --candidate .baseline/current
+bundle exec perfgate run --output .perfgate/current
+bundle exec perfgate compare --baseline .perfgate/main --candidate .perfgate/current
 ```
 
 `perfgate run` also accepts `--compare PATH` to run and compare against a
@@ -56,9 +47,9 @@ reference bundle in one step, and `--format markdown` to render a Markdown
 report instead of the console summary. Combined, this is what a CI job needs:
 
 ```bash
-bundle exec baseline run \
-  --output .baseline/current \
-  --compare .baseline/reference \
+bundle exec perfgate run \
+  --output .perfgate/current \
+  --compare .perfgate/reference \
   --format markdown
 ```
 
@@ -71,11 +62,11 @@ result between CI runs.
 
 ## Docs
 
-- [Architecture](docs/architecture.md) — layered pipeline, key design decisions, how to add a metric
-- [Onboarding guide](docs/onboarding.md) — first-run walkthrough for an existing Rails/RSpec app
-- [Compatibility matrix](docs/compatibility.md) — supported Ruby, Rails, and database versions
-- [Telemetry contract](docs/telemetry.md) — what is (and is never) collected
-- [Roadmap](ROADMAP.md) — what's done, what's next, what's out of scope
+- [Architecture](docs/architecture.md) - layered pipeline, key design decisions, how to add a metric
+- [Onboarding guide](docs/onboarding.md) - first-run walkthrough for an existing Rails/RSpec app
+- [Compatibility matrix](docs/compatibility.md) - supported Ruby, Rails, and database versions
+- [Telemetry contract](docs/telemetry.md) - what is (and is never) collected
+- [Roadmap](ROADMAP.md) - what's done, what's next, what's out of scope
 
 ## Development
 
@@ -85,11 +76,11 @@ interactive prompt that will allow you to experiment.
 
 ## Contributing
 
-Bug reports and pull requests are welcome once the repository has a public
-home. See the technical specification for scope, principles, and the
-implementation constraints that pull requests are expected to follow.
+Bug reports and pull requests are welcome on [GitHub](https://github.com/a11ejandro/perfgate).
+See the contribution guide for scope, principles, and the implementation
+constraints that pull requests are expected to follow.
 
 ## License
 
-Baseline is available as open source under the terms of the
+Perfgate is available as open source under the terms of the
 [Apache License 2.0](LICENSE).
