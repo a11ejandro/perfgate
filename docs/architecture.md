@@ -1,6 +1,6 @@
 # Architecture
 
-Baseline is a layered pipeline: each layer has a single responsibility and hands
+Perfgate is a layered pipeline: each layer has a single responsibility and hands
 off a well-typed value to the next. No layer reaches backwards.
 
 ```
@@ -9,7 +9,7 @@ RSpec examples
      ▼
 ┌─────────────┐
 │  Discovery  │  rspec/discovery.rb, rspec/workload_builder.rb
-│             │  Finds :baseline-tagged examples; builds Workload objects
+│             │  Finds :perfgate-tagged examples; builds Workload objects
 └──────┬──────┘
        │  []Workload
        ▼
@@ -80,7 +80,7 @@ Serialization   serialization/run_result.rb
 
 CLI             cli/{run_command,compare_command,run_comparison_reporter}.rb
                 Thin dispatcher; each subcommand is a callable object.
-                `baseline run --compare PATH --format markdown` is the canonical
+                `perfgate run --compare PATH --format markdown` is the canonical
                 one-step CI command.
 
 Errors          errors.rb
@@ -109,7 +109,7 @@ difference that is smaller than `minimum_absolute_ms` (default 10 ms) is
 downgraded from FAIL to WARN. A sub-noise-ratio change is downgraded further
 to PASS. This prevents microscopic regressions from blocking PRs.
 
-**One source of truth for thresholds.** `baseline.yml` controls every
+**One source of truth for thresholds.** `perfgate.yml` controls every
 comparison and policy knob. Environment variables may override values for CI
 parameterisation but cannot introduce new keys.
 

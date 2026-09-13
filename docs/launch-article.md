@@ -1,4 +1,4 @@
-# Introducing Baseline: a CI-native performance gate for Rails, built on RSpec
+# Introducing Perfgate: a CI-native performance gate for Rails, built on RSpec
 
 *Draft launch article. Adjust tone, add real screenshots/output, and
 link a public repository before publishing.*
@@ -19,9 +19,9 @@ the background job that processes an order. Those examples know how to
 set up the right data and call the right code. What they don't do is
 tell you whether that code got slower.
 
-## What Baseline does
+## What Perfgate does
 
-Baseline turns selected RSpec examples into repeatable performance
+Perfgate turns selected RSpec examples into repeatable performance
 workloads. It runs each one several times in an isolated process,
 measures wall-clock duration, SQL query count and duration, and object
 allocations, and produces a versioned result bundle. On a pull request,
@@ -35,7 +35,7 @@ The answer comes back as a clear PASS, WARN, or FAIL, with a
 console summary and a Markdown report explaining *why*:
 
 ```text
-Baseline Performance Assurance
+Perfgate Performance Assurance
 
 Overall: FAIL
 Baseline: main@1a2b3c4
@@ -58,7 +58,7 @@ Samples: 8 baseline / 8 candidate
 
 Wall-clock duration on a shared CI runner is noisy. Two runs of
 identical code can easily differ by 10-20% just from scheduling noise.
-Baseline treats duration as one signal among several, downgrades
+Perfgate treats duration as one signal among several, downgrades
 low-confidence results instead of crying wolf, and refuses to compare
 runs from environments it isn't confident are equivalent -- a different
 Ruby or Rails version, a changed workload definition, or an
@@ -67,7 +67,7 @@ silently producing a misleading result.
 
 ## Built for CI, not a hosted product
 
-There's no account to create and no dashboard to log into. Baseline
+There's no account to create and no dashboard to log into. Perfgate
 stores its result bundles as plain, versioned JSON on your own
 filesystem or CI artifact storage. A documented GitHub Actions workflow
 downloads your default branch's last result, runs your workloads, and
@@ -81,7 +81,7 @@ service in the loop.
 gem "perfgate", group: :test
 ```
 
-Tag an existing request spec or job spec with `baseline: true`, wrap the
+Tag an existing request spec or job spec with `perfgate: true`, wrap the
 part you care about in `Perfgate.measure { ... }`, and you have your
 first workload. See
 [docs/onboarding.md](onboarding.md) for a full walkthrough, including
@@ -89,7 +89,7 @@ wiring up the GitHub Actions workflow.
 
 ## Where this is going
 
-Baseline is early. The MVP focuses on Rails + RSpec, GitHub Actions,
+Perfgate is early. The MVP focuses on Rails + RSpec, GitHub Actions,
 and a conservative, explainable comparison engine over a broad feature
 set. We'd rather earn trust on a narrow surface than ship something
 that produces confusing or noisy results. If you try it and hit a

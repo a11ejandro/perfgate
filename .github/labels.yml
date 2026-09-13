@@ -94,7 +94,7 @@
 
 - name: "area: config"
   color: "c5def5"
-  description: "baseline.yml schema, validation, env overrides"
+  description: "perfgate.yml schema, validation, env overrides"
 
 # ── Impact ────────────────────────────────────────────────────────────────────
 
@@ -104,8 +104,8 @@
 
 - name: "performance"
   color: "f9d0c4"
-  description: "Affects the speed or resource use of Baseline itself"
+  description: "Affects the speed or resource use of Perfgate itself"
 
 - name: "false positive / false negative"
   color: "f9d0c4"
-  description: "Baseline produces an incorrect PASS or incorrect FAIL"
+  description: "Perfgate produces an incorrect PASS or incorrect FAIL"

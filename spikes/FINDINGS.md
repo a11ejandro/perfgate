@@ -80,7 +80,7 @@ on its own.
 - Repeatability study on GitHub-hosted runners (needs a pushed repo +
   Actions workflow) — real noise on shared CI hardware is very likely
   higher than what we saw locally. Do this before finalizing default
-  sample counts/thresholds in `baseline.yml`.
+  sample counts/thresholds in `perfgate.yml`.
 
 ## Answers to open questions this touched (spec section 33)
 

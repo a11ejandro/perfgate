@@ -1,6 +1,6 @@
 # Design-Partner Onboarding Guide
 
-This is the walkthrough for an early adopter team installing Baseline
+This is the walkthrough for an early adopter team installing Perfgate
 for the first time, aimed squarely at Milestone 5's exit criterion:
 completing installation without the maintainer touching your repo.
 
@@ -19,7 +19,7 @@ gem "perfgate", path: "../baseline", group: :test # or a git ref, until publishe
 bundle install
 ```
 
-No `baseline.yml` is required to get started -- a missing config file
+No `perfgate.yml` is required to get started -- a missing config file
 is treated as pure defaults (8 samples, 2 warmup iterations, all
 metrics enabled). Add one later once you want to tune thresholds or
 policy.
@@ -27,12 +27,12 @@ policy.
 ## 2. Tag your first workload
 
 Pick one existing request spec, job spec, or similar RSpec example
-that exercises a code path you care about. Add `baseline: true` to its
+that exercises a code path you care about. Add `perfgate: true` to its
 metadata, and wrap only the part you want measured in
 `Perfgate.measure`:
 
 ```ruby
-RSpec.describe "Checkout", type: :request, baseline: true do
+RSpec.describe "Checkout", type: :request, perfgate: true do
   it "creates an order" do
     sign_in(create(:user))
     cart = create(:cart, :with_line_items)
@@ -57,12 +57,12 @@ for a request-spec and a job-spec example side by side.
 ## 3. Run it locally
 
 ```bash
-bundle exec baseline run --output .baseline/current
+bundle exec perfgate run --output .perfgate/current
 ```
 
-This discovers every `baseline: true`-tagged example, runs its warmup
+This discovers every `perfgate: true`-tagged example, runs its warmup
 + samples in an isolated process, and writes a versioned result bundle
-to `.baseline/current/runs/<run-id>/`.
+to `.perfgate/current/runs/<run-id>/`.
 
 ## 4. Compare two runs
 
@@ -70,10 +70,10 @@ Run it again (ideally after making a change you'd expect to matter),
 then compare:
 
 ```bash
-bundle exec baseline compare \
-  --baseline .baseline/current \
-  --candidate .baseline/new-run \
-  --output .baseline/comparisons
+bundle exec perfgate compare \
+  --baseline .perfgate/current \
+  --candidate .perfgate/new-run \
+  --output .perfgate/comparisons
 ```
 
 You'll get a console report with a PASS/WARN/FAIL decision per metric,
@@ -82,18 +82,18 @@ format in the main [README](../README.md#usage).
 
 ## 5. Wire up CI
 
-Copy [examples/rails-rspec-app/.github/workflows/baseline.yml](../examples/rails-rspec-app/.github/workflows/baseline.yml)
+Copy [examples/rails-rspec-app/.github/workflows/perfgate.yml](../examples/rails-rspec-app/.github/workflows/perfgate.yml)
 into `.github/workflows/` in your repository. It:
 
-1. downloads the last `baseline-main` artifact (if one exists yet);
-2. runs `baseline run --compare .baseline/reference --format markdown`,
+1. downloads the last `perfgate-main` artifact (if one exists yet);
+2. runs `perfgate run --compare .perfgate/reference --format markdown`,
    which runs your workloads and compares them in one step;
 3. publishes the resulting `summary.md` to the GitHub job summary;
 4. re-uploads the artifact when building `main`, so the next PR has
    something to compare against.
 
 The very first run on a repository will have nothing to compare
-against yet -- `baseline run --compare` detects the missing baseline
+against yet -- `perfgate run --compare` detects the missing baseline
 and reports it as a warning rather than failing the build. After the
 first successful `main` build, every subsequent PR compares against
 it.

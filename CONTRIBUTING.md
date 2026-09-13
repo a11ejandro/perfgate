@@ -1,6 +1,6 @@
-# Contributing to Baseline
+# Contributing to Perfgate
 
-Thanks for considering a contribution. Baseline is early and the scope
+Thanks for considering a contribution. Perfgate is early and the scope
 is deliberately narrow -- see
 [baseline_oss_mvp_technical_spec_and_roadmap.md](../baseline_oss_mvp_technical_spec_and_roadmap.md)
 for the authoritative product and technical specification. If you're
@@ -34,14 +34,14 @@ arguments) runs both.
   length or complexity (`Metrics/MethodLength`, `Metrics/ClassLength`,
   `Metrics/ModuleLength`, etc.), **extract a smaller method or a new
   collaborator class/module** rather than raising the limit in
-  `.rubocop.yml`. Several modules in `lib/baseline/comparison/` and
-  `lib/baseline/cli/` exist specifically because of this rule -- follow
+  `.rubocop.yml`. Several modules in `lib/perfgate/comparison/` and
+  `lib/perfgate/cli/` exist specifically because of this rule -- follow
   that pattern.
 - Favor small, single-purpose classes and modules over large ones.
   Keep public interfaces documented with a short module/class comment
   explaining the "why", not just the "what".
 - New behavior should ship with unit tests. Regression-injection style
-  tests (seed a known regression, assert Baseline detects it) are
+  tests (seed a known regression, assert Perfgate detects it) are
   especially valuable for comparison/policy logic.
 - Don't add a new runtime dependency without discussing it first --
   the spec favors using Ruby/Rails standard library and already-present
@@ -62,8 +62,8 @@ arguments) runs both.
 
 Open a GitHub issue with:
 
-- Baseline version, Ruby version, Rails version, RSpec version;
-- your `baseline.yml` (redacted if needed);
+- Perfgate version, Ruby version, Rails version, RSpec version;
+- your `perfgate.yml` (redacted if needed);
 - the command you ran and its full output;
 - what you expected vs. what happened.
 

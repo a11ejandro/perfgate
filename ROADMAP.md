@@ -9,7 +9,7 @@ Status key: ✅ done · 🚧 in progress · ⬜ not started
 
 ## Phase 1 — Implemented (MVP core)
 
-✅ `perfgate run` — discovers `:baseline`-tagged RSpec examples, runs warmups
+✅ `perfgate run` — discovers `:perfgate`-tagged RSpec examples, runs warmups
    + measured samples in subprocess isolation, writes a versioned JSON result bundle
 
 ✅ `perfgate compare` — loads two result bundles, validates fingerprint
@@ -33,7 +33,7 @@ Status key: ✅ done · 🚧 in progress · ⬜ not started
 ✅ Console and Markdown reporters — table-format console output; GitHub-flavored
    Markdown for job summaries and PR comments
 
-✅ `baseline run --compare PATH --format markdown` — one-step CI command
+✅ `perfgate run --compare PATH --format markdown` — one-step CI command
 
 ✅ Portable archives — `export_archive`/`import_archive` for `.tar.gz` artifact
    hand-off between CI jobs; path-traversal rejection on import
@@ -48,7 +48,7 @@ Status key: ✅ done · 🚧 in progress · ⬜ not started
 
 ## Phase 2 — Pre-release polish
 
-⬜ `perfgate init` — scaffold `baseline.yml` with commented defaults and an
+⬜ `perfgate init` — scaffold `perfgate.yml` with commented defaults and an
    example workload block; the spec describes it but it is not yet built
 
 ⬜ `perfgate doctor` — pre-flight check: Ruby/Rails version, RSpec integration
@@ -73,10 +73,10 @@ Status key: ✅ done · 🚧 in progress · ⬜ not started
 
 ## Phase 3 — Developer experience
 
-⬜ `baseline accept` — mark a known-regression comparison as accepted so the
+⬜ `perfgate accept` — mark a known-regression comparison as accepted so the
    next default-branch run becomes the new reference without manual file moves
 
-⬜ Per-workload threshold overrides in `baseline.yml` — allow tighter or
+⬜ Per-workload threshold overrides in `perfgate.yml` — allow tighter or
    looser thresholds for specific workload IDs
 
 ⬜ Memory delta metric (opt-in) — process RSS delta per sample; gated behind
@@ -87,7 +87,7 @@ Status key: ✅ done · 🚧 in progress · ⬜ not started
 
 ⬜ VS Code / RubyMine run-configuration snippets in the example app
 
-⬜ Interactive `baseline run --watch` for local iteration
+⬜ Interactive `perfgate run --watch` for local iteration
 
 ---
 
@@ -114,11 +114,11 @@ Status key: ✅ done · 🚧 in progress · ⬜ not started
 
 These are explicitly not on the roadmap for the open-source gem:
 
-- Baseline Cloud / hosted dashboards / long-term history
+- Perfgate Cloud / hosted dashboards / long-term history
 - User accounts or billing
 - Multi-repository analytics
 - Production APM or continuous profiling
-- Automatic workload discovery (without explicit `:baseline` tag)
+- Automatic workload discovery (without explicit `:perfgate` tag)
 - Browser / E2E measurement
 - Distributed or concurrency load testing
 - AI-generated diagnoses or automatic code attribution

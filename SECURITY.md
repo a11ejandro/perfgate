@@ -2,7 +2,7 @@
 
 ## Supported versions
 
-Baseline is pre-1.0. Security fixes are made against the latest release
+Perfgate is pre-1.0. Security fixes are made against the latest release
 on the default branch; there is no long-term support branch yet.
 
 | Version | Supported |
@@ -14,12 +14,12 @@ on the default branch; there is no long-term support branch yet.
 
 Please do not open a public GitHub issue for suspected security
 vulnerabilities. Instead, use GitHub's private
-[vulnerability reporting](https://github.com/baseline-oss/perfgate/security/advisories/new)
+[vulnerability reporting](https://github.com/a11ejandro/perfgate/security/advisories/new)
 feature, or email the maintainer directly at bendthe@gmail.com with:
 
 - a description of the issue and its potential impact;
 - steps to reproduce, or a minimal repro case;
-- the Baseline version, Ruby version, and Rails version involved.
+- the Perfgate version, Ruby version, and Rails version involved.
 
 You should receive an acknowledgment within 5 business days. We'll work
 with you to understand and confirm the issue, agree on a disclosure
@@ -28,10 +28,10 @@ stay anonymous.
 
 ## What's in scope
 
-- The `baseline` gem's CLI, execution engine, comparison/policy logic,
+- The `perfgate` gem's CLI, execution engine, comparison/policy logic,
   and filesystem storage adapter.
 - Archive import handling (path traversal, malformed archives).
-- Anything that could cause Baseline to execute untrusted code,
+- Anything that could cause Perfgate to execute untrusted code,
   deserialize untrusted data unsafely, or exfiltrate source code, SQL,
   or environment values it isn't supposed to touch (see the data
   handling guarantees in the technical specification, section 22).
@@ -41,13 +41,13 @@ stay anonymous.
 - The example Rails application under `examples/`, which is
   illustrative only and not meant to be run as a real service.
 - Vulnerabilities that require the attacker to already control
-  `baseline.yml` or the workload specs in a repository that has
-  chosen to run Baseline (i.e. arbitrary Ruby code a repository owner
+  `perfgate.yml` or the workload specs in a repository that has
+  chosen to run Perfgate (i.e. arbitrary Ruby code a repository owner
   chose to execute in their own CI).
 
-## Baseline's security posture
+## Perfgate's security posture
 
-By design, Baseline:
+By design, Perfgate:
 
 - makes no mandatory network requests;
 - never sends source code, SQL text, bind values, or environment
@@ -59,5 +59,5 @@ By design, Baseline:
 - keeps telemetry opt-in and disabled by default (see
   [docs/telemetry.md](docs/telemetry.md)).
 
-A vulnerability report that Baseline violates one of these guarantees
+A vulnerability report that Perfgate violates one of these guarantees
 is always in scope, even if it wasn't listed above.

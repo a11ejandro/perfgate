@@ -1,4 +1,4 @@
-# Baseline Documentation
+# Perfgate Documentation
 
 This directory will hold user-facing documentation (installation, CLI
 reference, configuration reference, CI integration guides) as the gem is
