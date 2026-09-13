@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Perfgate
-  # Entry point for the `baseline` executable. `run` and `compare` are
+  # Entry point for the `perfgate` executable. `run` and `compare` are
   # implemented (Milestones 1-4); `init`, `report`, `doctor`, and
   # `schema` are planned for later milestones (spec section 10).
   class CLI
@@ -16,13 +16,13 @@ module Perfgate
     def run
       dispatch(*@argv)
     rescue Perfgate::ConfigurationError => e
-      warn "baseline: #{e.message}"
+      warn "perfgate: #{e.message}"
       2
     rescue Perfgate::ResultBundleError, Perfgate::WorkloadError => e
-      warn "baseline: #{e.message}"
+      warn "perfgate: #{e.message}"
       3
     rescue Perfgate::Error => e
-      warn "baseline: #{e.message}"
+      warn "perfgate: #{e.message}"
       1
     end
 
@@ -48,12 +48,12 @@ module Perfgate
     end
 
     def usage
-      warn "usage: baseline <command> [options]"
+      warn "usage: perfgate <command> [options]"
       1
     end
 
     def unknown_command(command)
-      warn "baseline: unknown or not-yet-implemented command #{command.inspect}"
+      warn "perfgate: unknown or not-yet-implemented command #{command.inspect}"
       1
     end
   end

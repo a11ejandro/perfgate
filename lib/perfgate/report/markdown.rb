@@ -7,7 +7,7 @@ module Perfgate
     # overall decision, run identities, compatibility status, a
     # per-workload/per-metric table, noise warnings, diagnostics, a
     # pointer to the machine-readable JSON, and an explanation of the
-    # exit code. This is what `baseline run --format markdown` writes
+    # exit code. This is what `perfgate run --format markdown` writes
     # and what the GitHub Actions example appends to the job summary.
     module Markdown
       DURATION_METRICS = %w[duration sql_duration].freeze
@@ -27,7 +27,7 @@ module Perfgate
       end
 
       def header(policy_result)
-        "## Baseline Performance Assurance\n\n**Overall:** #{policy_result["status"].upcase}"
+        "## Perfgate Performance Assurance\n\n**Overall:** #{policy_result["status"].upcase}"
       end
 
       def identities(comparison_result)

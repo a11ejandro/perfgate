@@ -76,6 +76,6 @@ RSpec.describe Perfgate::CLI::CompareCommand do
         ["--baseline", baseline_dir, "--candidate", candidate_dir, "--output", File.join(@tmp, "output"),
          "--format", "markdown"]
       ).call
-    end.to output(/## Baseline Performance Assurance/).to_stdout
+    end.to output(/## Perfgate Performance Assurance/).to_stdout
   end
 end

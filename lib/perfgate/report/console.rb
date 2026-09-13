@@ -15,7 +15,7 @@ module Perfgate
       module_function
 
       def render(comparison_result:, policy_result:)
-        lines = ["Baseline Performance Assurance", "", "Overall: #{policy_result["status"].upcase}",
+        lines = ["Perfgate Performance Assurance", "", "Overall: #{policy_result["status"].upcase}",
                  "Baseline: #{comparison_result["baseline_run_id"]}",
                  "Candidate: #{comparison_result["candidate_run_id"]}", ""]
         comparison_result.fetch("workloads", []).each { |workload| lines.concat(workload_lines(workload)) }

@@ -10,7 +10,7 @@ require_relative "../report/markdown"
 
 module Perfgate
   class CLI
-    # Implements `baseline compare` (spec section 10.3): loads two
+    # Implements `perfgate compare` (spec section 10.3): loads two
     # already-produced result bundles, runs them through the comparison
     # engine and policy engine, saves the comparison document, prints a
     # console (or Markdown, with --format markdown) report, and exits

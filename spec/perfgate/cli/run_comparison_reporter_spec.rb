@@ -39,7 +39,7 @@ RSpec.describe Perfgate::CLI::RunComparisonReporter do
 
     expect(exit_code).to eq(0)
     summary = File.read(File.join(run_dir, "summary.md"))
-    expect(summary).to include("## Baseline Performance Assurance")
+    expect(summary).to include("## Perfgate Performance Assurance")
   end
 
   it "treats a missing reference bundle as a missing baseline, not a crash" do

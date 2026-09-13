@@ -9,11 +9,11 @@ require_relative "run_comparison_reporter"
 
 module Perfgate
   class CLI
-    # Implements `baseline run` (spec section 10.2): discovers workloads
+    # Implements `perfgate run` (spec section 10.2): discovers workloads
     # via the RSpec integration, executes each workload's warmup+samples
     # in an isolated child process, and writes a filesystem result
     # bundle. With --compare PATH, immediately compares the fresh run
-    # against a reference bundle and reports/exits like `baseline
+    # against a reference bundle and reports/exits like `perfgate
     # compare` would -- this is the single combined step the spec's
     # GitHub Actions example (section 19.1) invokes. --format markdown
     # additionally writes a summary.md into the output directory for a
@@ -30,7 +30,7 @@ module Perfgate
         run_result = execute(config)
         run_dir = save(config, run_result)
 
-        @options[:compare] ? compare_and_report(config, run_result, run_dir) : run_only_report(run_result, run_dir)
+        @options[:compare] ? compare_and_report(config, run_result) : run_only_report(config, run_result, run_dir)
       end
 
       private
@@ -81,10 +81,10 @@ module Perfgate
         @argv.empty? ? ["spec"] : @argv
       end
 
-      def run_only_report(run_result, run_dir)
-        puts "baseline run: #{run_result["workloads"].size} workload(s) -> #{run_dir}"
+      def run_only_report(config, run_result, run_dir)
+        puts "perfgate run: #{run_result["workloads"].size} workload(s) -> #{run_dir}"
         run_result["workloads"].each { |workload| report_workload(workload) }
-        write_run_only_summary(run_result, run_dir)
+        write_run_only_summary(run_result, output_root(config))
         exit_code(run_result)
       end
 
@@ -107,16 +107,20 @@ module Perfgate
         return unless @options[:format] == "markdown"
 
         rows = run_result["workloads"].map { |w| "| #{w["id"]} | #{w["status"]} |" }
-        content = (["## Baseline Run", "", "No reference bundle was compared against.", "",
+        content = (["## Perfgate Run", "", "No reference bundle was compared against.", "",
                     "| Workload | Status |", "|---|---|"] + rows).join("\n")
         File.write(File.join(run_dir, "summary.md"), content)
       end
 
-      def compare_and_report(config, run_result, run_dir)
+      def compare_and_report(config, run_result)
         reporter = RunComparisonReporter.new(reference_path: @options[:compare],
-                                             output_root: @options[:output] || config.storage_path,
+                                             output_root: output_root(config),
                                              format: @options[:format])
-        reporter.call(config: config, run_result: run_result, run_dir: run_dir)
+        reporter.call(config: config, run_result: run_result, run_dir: output_root(config))
+      end
+
+      def output_root(config)
+        @options[:output] || config.storage_path
       end
     end
   end

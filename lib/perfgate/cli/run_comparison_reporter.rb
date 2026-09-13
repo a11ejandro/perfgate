@@ -8,7 +8,7 @@ require_relative "../storage/filesystem"
 
 module Perfgate
   class CLI
-    # Handles `baseline run`'s optional --compare PATH step: loads the
+    # Handles `perfgate run`'s optional --compare PATH step: loads the
     # reference bundle (tolerating a missing one, since the spec's
     # GitHub Actions example downloads it with continue-on-error),
     # compares it against the freshly-run result, saves and reports the
@@ -40,8 +40,8 @@ module Perfgate
 
       def missing_baseline_report(config, run_dir)
         policy_result = Policy::Engine.evaluate_missing_baseline(config: config)
-        puts "baseline run: no baseline found at #{@reference_path} -> #{policy_result["status"]}"
-        write_summary(run_dir, "## Baseline Run\n\nNo baseline was found at `#{@reference_path}`.") if markdown?
+        puts "perfgate run: no baseline found at #{@reference_path} -> #{policy_result["status"]}"
+        write_summary(run_dir, "## Perfgate Run\n\nNo baseline was found at `#{@reference_path}`.") if markdown?
         policy_result.fetch("exit_code")
       end
 

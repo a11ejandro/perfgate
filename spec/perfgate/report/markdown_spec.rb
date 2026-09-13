@@ -32,7 +32,7 @@ RSpec.describe Perfgate::Report::Markdown do
   describe ".render" do
     subject(:markdown) do
       described_class.render(comparison_result: comparison_result, policy_result: policy_result,
-                             comparison_path: ".baseline/comparisons/abc.json")
+                             comparison_path: ".perfgate/comparisons/abc.json")
     end
 
     it "states the overall decision" do
@@ -57,7 +57,7 @@ RSpec.describe Perfgate::Report::Markdown do
     end
 
     it "links to the machine-readable output" do
-      expect(markdown).to include(".baseline/comparisons/abc.json")
+      expect(markdown).to include(".perfgate/comparisons/abc.json")
     end
 
     it "explains the exit code" do
