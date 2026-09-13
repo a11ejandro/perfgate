@@ -16,7 +16,7 @@ module Perfgate
     # does not survive fork (each child effectively starts with an empty
     # database), so process isolation requires a file-based or
     # server-based test database. This mirrors an existing constraint on
-    # Rails' own parallel test runners and isn't specific to Baseline.
+    # Rails' own parallel test runners and isn't specific to Perfgate.
     class ProcessRunner
       def initialize(workload, runner_class: Runner)
         @workload = workload
@@ -25,6 +25,7 @@ module Perfgate
 
       def call
         ensure_fork_supported!
+        release_active_record_connections
 
         reader, writer = IO.pipe
         pid = fork_child(reader, writer)
@@ -42,6 +43,15 @@ module Perfgate
         return if Process.respond_to?(:fork)
 
         raise Perfgate::Error, "process isolation requires Process.fork, which this Ruby platform does not support"
+      end
+
+      def release_active_record_connections
+        return unless defined?(::ActiveRecord::Base)
+
+        handler = ::ActiveRecord::Base.connection_handler
+        return handler.clear_all_connections! if handler.respond_to?(:clear_all_connections!)
+
+        handler.clear_active_connections!
       end
 
       def fork_child(reader, writer)

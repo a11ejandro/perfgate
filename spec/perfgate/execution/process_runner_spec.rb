@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "perfgate/execution/process_runner"
+require "perfgate/workloads/workload"
 
 RSpec.describe Perfgate::Execution::ProcessRunner do
   def workload(&block)
