@@ -1,4 +1,4 @@
-name: Baseline
+name: Perfgate
 
 on:
   pull_request:
@@ -6,7 +6,7 @@ on:
     branches: [main]
 
 jobs:
-  baseline:
+  perfgate:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -19,30 +19,31 @@ jobs:
       # grabs whatever the main branch's most recent workflow run
       # uploaded under this fixed artifact name. continue-on-error
       # covers the very first run on a repository, where no such
-      # artifact exists yet -- baseline run then falls back to treating
+      # artifact exists yet -- perfgate run then falls back to treating
       # the comparison as a missing baseline instead of failing.
-      - name: Download default-branch Baseline
+      - name: Download default-branch Perfgate
         if: github.event_name == 'pull_request'
         uses: actions/download-artifact@v4
         with:
-          name: baseline-main
-          path: .baseline/reference
+          name: perfgate-main
+          path: .perfgate/reference
         continue-on-error: true
 
-      - name: Run Baseline
+      - name: Run Perfgate
         run: |
-          bundle exec baseline run \
-            --output .baseline/current \
-            --compare .baseline/reference \
+          bundle exec perfgate run \
+            --output .perfgate/current \
+            --compare .perfgate/reference \
             --format markdown
 
       - name: Publish summary
         if: always()
-        run: cat .baseline/current/summary.md >> "$GITHUB_STEP_SUMMARY"
+        run: cat .perfgate/current/summary.md >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Upload default-branch Baseline
+      - name: Upload default-branch Perfgate
         if: github.ref == 'refs/heads/main'
         uses: actions/upload-artifact@v4
         with:
-          name: baseline-main
-          path: .baseline/current
+          name: perfgate-main
+          path: .perfgate/current
+          include-hidden-files: true
