@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 
 module Perfgate
-  # Base class for all Baseline-raised errors.
+  # Base class for all Perfgate-raised errors.
   class Error < StandardError; end
 
-  # Raised when baseline.yml is missing, malformed, or fails schema validation.
+  # Raised when perfgate.yml is missing, malformed, or fails schema validation.
   class ConfigurationError < Error; end
 
   # Raised when a workload cannot be executed as configured (e.g. missing

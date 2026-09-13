@@ -6,14 +6,14 @@ require_relative "perfgate/config"
 require_relative "perfgate/workloads/registry"
 require_relative "perfgate/execution/sample_context"
 
-# Baseline is a CI-native performance assurance tool for Ruby on Rails
+# Perfgate is a CI-native performance assurance tool for Ruby on Rails
 # applications. It converts selected RSpec examples into repeatable
 # performance workloads and compares them against a compatible
 # default-branch baseline to produce a merge-gate decision.
 module Perfgate
   class << self
     # Explicitly marks the block whose execution should be measured by
-    # Baseline (spec section 9.1). Outside of a running workload sample
+    # Perfgate (spec section 9.1). Outside of a running workload sample
     # (e.g. called directly in a plain unit test) this simply executes
     # the block and returns its value without recording anything.
     def measure(&block)
@@ -24,7 +24,7 @@ module Perfgate
     end
 
     # The active configuration, loaded via Config.load or Config.default.
-    # `baseline run` assigns this after loading baseline.yml.
+    # `perfgate run` assigns this after loading perfgate.yml.
     def configuration
       @configuration ||= Config.default
     end

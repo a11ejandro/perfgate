@@ -65,7 +65,7 @@ module Perfgate
 
       # Applications provide their own dataset fingerprint hook (spec
       # section 12.3, e.g. a fixture set version or seed migration
-      # number); Baseline only ever stores its hash, never the raw value,
+      # number); Perfgate only ever stores its hash, never the raw value,
       # to avoid leaking application data into shared run artifacts.
       def dataset_hash(config)
         raw = config.dataset_fingerprint.call

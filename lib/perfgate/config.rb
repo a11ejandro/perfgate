@@ -7,7 +7,7 @@ require_relative "config/validator"
 require_relative "config/env_overrides"
 
 module Perfgate
-  # Loads, validates, and provides typed access to baseline.yml (spec
+  # Loads, validates, and provides typed access to perfgate.yml (spec
   # section 11). Configuration is a plain merged Hash under the hood;
   # this class only adds convenience readers for the values Milestone 1
   # actually acts on (execution sample/warmup counts, enabled metrics,
@@ -20,7 +20,7 @@ module Perfgate
         new(deep_dup(Defaults::HASH))
       end
 
-      # Loads baseline.yml (or the given path). A missing file is treated
+      # Loads perfgate.yml (or the given path). A missing file is treated
       # as an empty configuration, i.e. pure defaults.
       def load(path = "perfgate.yml")
         raw = read_yaml(path)

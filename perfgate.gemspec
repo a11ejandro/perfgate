@@ -9,7 +9,7 @@ Gem::Specification.new do |spec|
   spec.email = ["bendthe@gmail.com"]
 
   spec.summary = "CI-native performance regression assurance for Rails and RSpec."
-  spec.description = "Baseline converts selected RSpec examples into repeatable performance " \
+  spec.description = "Perfgate converts selected RSpec examples into repeatable performance " \
                      "workloads, measures application-level signals (duration, SQL activity, " \
                      "allocations, GC), compares a pull request against a compatible " \
                      "default-branch baseline, and produces a clear CI merge-gate decision."

@@ -27,7 +27,7 @@ RSpec.describe Perfgate::Config do
 
   describe ".load" do
     it "falls back to defaults when the file does not exist" do
-      config = described_class.load("/nonexistent/baseline.yml")
+      config = described_class.load("/nonexistent/perfgate.yml")
 
       expect(config.execution_samples).to eq(8)
     end
@@ -84,7 +84,7 @@ RSpec.describe Perfgate::Config do
       end
     end
 
-    it "applies BASELINE_-prefixed environment variable overrides" do
+    it "applies PERFGATE_-prefixed environment variable overrides" do
       Dir.mktmpdir do |dir|
         path = File.join(dir, "perfgate.yml")
         File.write(path, "version: 1\n")

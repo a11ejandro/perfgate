@@ -13,11 +13,11 @@ module Perfgate
     # to the measurement block").
     class SampleContext
       def self.current
-        Thread.current[:baseline_sample_context]
+        Thread.current[:perfgate_sample_context]
       end
 
       def self.current=(context)
-        Thread.current[:baseline_sample_context] = context
+        Thread.current[:perfgate_sample_context] = context
       end
 
       # Runs the block with a fresh context active for the given metric

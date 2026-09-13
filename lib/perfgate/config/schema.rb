@@ -2,7 +2,7 @@
 
 module Perfgate
   class Config
-    # Declares which keys baseline.yml recognizes at each nesting level.
+    # Declares which keys perfgate.yml recognizes at each nesting level.
     # A Hash value means "this key has its own nested keys"; `true` marks
     # a leaf value. Used to enforce "unknown keys fail validation" from
     # spec section 11.

@@ -2,7 +2,7 @@
 
 module Perfgate
   module Workloads
-    # A deterministic executable path measured by Baseline (spec section
+    # A deterministic executable path measured by Perfgate (spec section
     # 7). Normally backed by one RSpec example, but the callable is kept
     # generic so the execution engine can be exercised without RSpec.
     class Workload

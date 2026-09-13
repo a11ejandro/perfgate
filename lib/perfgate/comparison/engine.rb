@@ -15,7 +15,7 @@ module Perfgate
     #
     # Compatibility is checked first (spec section 15): when the runs are
     # incompatible, no per-workload metric decisions are computed at all
-    # -- Baseline never silently compares runs it can't vouch for.
+    # -- Perfgate never silently compares runs it can't vouch for.
     module Engine
       SCHEMA_VERSION = 1
 

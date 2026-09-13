@@ -2,7 +2,7 @@
 
 source "https://rubygems.org"
 
-# Specify your gem's dependencies in baselined.gemspec
+# Specify your gem's dependencies in perfgate.gemspec
 gemspec
 
 gem "rake", "~> 13.0"

@@ -2,10 +2,10 @@
 
 module Perfgate
   class Config
-    # Default configuration values, matching the illustrative baseline.yml
+    # Default configuration values, matching the illustrative perfgate.yml
     # in spec section 11. `storage.path` intentionally uses the base
-    # directory from section 18.2's layout (`.baseline`) rather than the
-    # `.baseline/results` shown in section 11's example, since the two
+    # directory from section 18.2's layout (`.perfgate`) rather than the
+    # `.perfgate/results` shown in section 11's example, since the two
     # sections of the spec disagree and 18.2 is the more specific
     # authority on directory layout.
     module Defaults

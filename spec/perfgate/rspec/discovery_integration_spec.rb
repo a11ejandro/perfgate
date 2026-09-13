@@ -1,13 +1,15 @@
 # frozen_string_literal: true
 
 require "rspec/core/sandbox"
+require "perfgate/execution/runner"
 require "perfgate/rspec"
+require "perfgate/serialization/run_result"
 
 # Exercises the exit criterion for Milestone 1 (spec section 28): "one
 # workload can be run repeatedly and serialized". Uses RSpec::Core::Sandbox
-# so a nested, `:baseline`-tagged example group can be defined and run
+# so a nested, `:perfgate`-tagged example group can be defined and run
 # without disturbing the real RSpec::Core::World running this very spec.
-RSpec.describe "Baseline RSpec integration" do
+RSpec.describe "Perfgate RSpec integration" do
   around do |example|
     RSpec::Core::Sandbox.sandboxed { example.run }
   end
@@ -24,7 +26,7 @@ RSpec.describe "Baseline RSpec integration" do
     group
   end
 
-  it "discovers a :baseline-tagged example as a workload" do
+  it "discovers a :perfgate-tagged example as a workload" do
     define_sandboxed_example { 1 + 1 }
 
     Perfgate::RSpec::Discovery.call
@@ -32,7 +34,7 @@ RSpec.describe "Baseline RSpec integration" do
     expect(Perfgate.registry.ids.size).to eq(1)
   end
 
-  it "does not register examples without :baseline metadata" do
+  it "does not register examples without :perfgate metadata" do
     define_sandboxed_example({}) { 1 + 1 }
 
     Perfgate::RSpec::Discovery.call
@@ -70,7 +72,7 @@ RSpec.describe "Baseline RSpec integration" do
     expect(result["error"]).to match(/workload failed/)
   end
 
-  it "honors an explicit id override in the :baseline metadata" do
+  it "honors an explicit id override in the :perfgate metadata" do
     define_sandboxed_example(perfgate: { id: "custom-id" }) { 1 }
 
     Perfgate::RSpec::Discovery.call

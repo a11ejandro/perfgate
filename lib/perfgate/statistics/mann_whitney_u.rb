@@ -10,7 +10,7 @@ module Perfgate
     # (spikes/regression_injection.rb) that validated this approach
     # against a seeded +20% duration regression.
     #
-    # Baseline never surfaces this p-value directly to users (spec
+    # Perfgate never surfaces this p-value directly to users (spec
     # 16.3: "do not expose p-values alone as user-facing proof") -- it is
     # combined with a practical-significance threshold by
     # Comparison::MetricDecision.

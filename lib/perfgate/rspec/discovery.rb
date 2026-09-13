@@ -4,7 +4,7 @@ require_relative "workload_builder"
 
 module Perfgate
   module RSpec
-    # Discovers RSpec examples tagged for Baseline (`:baseline` metadata,
+    # Discovers RSpec examples tagged for Perfgate (`:perfgate` metadata,
     # spec section 9.1) after spec files have been loaded, and registers
     # a Workload for each one.
     #

@@ -13,7 +13,7 @@ module Perfgate
     # exercises the full before/around/after hook chain each time (spec
     # section 12.2, "reset workload state" + "execute measured samples").
     # A ::RSpec::Core::NullReporter discards RSpec's own reporting, since
-    # Baseline does its own result collection.
+    # Perfgate does its own result collection.
     class WorkloadBuilder
       def initialize(defaults:)
         @defaults = defaults

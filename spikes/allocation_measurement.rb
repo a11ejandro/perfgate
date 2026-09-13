@@ -27,7 +27,7 @@ end
 
 samples = Array.new(10) { measure_allocations { workload } }
 puts "baseline allocations per run: #{samples}"
-puts "baseline: min=#{samples.min} max=#{samples.max} (identical? #{samples.uniq.size == 1})"
+puts "perfgate: min=#{samples.min} max=#{samples.max} (identical? #{samples.uniq.size == 1})"
 
 samples_extra = Array.new(10) { measure_allocations { workload(extra_allocations: true) } }
 puts "\ncandidate (+50 hashes) allocations per run: #{samples_extra}"
