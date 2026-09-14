@@ -57,7 +57,9 @@ module Perfgate
 
         comparison_id = SecureRandom.uuid
         path = File.join(dir, "#{comparison_id}.json")
-        File.write(path, JSON.pretty_generate(comparison_result))
+        content = JSON.pretty_generate(comparison_result)
+        File.write(path, content)
+        File.write("#{path}.sha256", "sha256:#{Digest::SHA256.hexdigest(content)}\n")
 
         path
       end

@@ -6,15 +6,17 @@ module Perfgate
     # 7). Normally backed by one RSpec example, but the callable is kept
     # generic so the execution engine can be exercised without RSpec.
     class Workload
-      attr_reader :id, :samples, :warmup, :metrics
+      attr_reader :id, :samples, :warmup, :metrics, :assurance, :source
 
-      def initialize(id:, samples:, warmup:, metrics: [:duration], &block)
+      def initialize(id:, samples:, warmup:, metrics: [:duration], assurance: {}, source: {}, &block)
         raise ArgumentError, "workload #{id.inspect} requires a block to execute" unless block
 
         @id = id
         @samples = samples
         @warmup = warmup
         @metrics = metrics
+        @assurance = assurance
+        @source = source
         @block = block
       end
 

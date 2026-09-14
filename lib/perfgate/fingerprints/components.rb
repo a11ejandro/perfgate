@@ -2,6 +2,9 @@
 
 require "digest"
 require "etc"
+require "json"
+require "open3"
+require "socket"
 
 module Perfgate
   module Fingerprints
@@ -26,19 +29,25 @@ module Perfgate
           "baseline_version_major" => Perfgate::VERSION.split(".").first,
           "database_adapter" => database_adapter,
           "database_version_major" => database_version_major,
-          "dataset_hash" => dataset_hash(config)
+          "dataset_hash" => dataset_hash(config),
+          "dependency_lock_hash" => dependency_lock_hash,
+          "schema_hash" => schema_hash,
+          "instrumentation_hash" => instrumentation_hash(config)
         }
       end
 
       def informational_components
         {
           "operating_system" => operating_system,
+          "kernel_release" => kernel_release,
           "cpu_model" => cpu_model,
           "cpu_count" => Etc.nprocessors.to_s,
-          "memory_bytes" => nil,
+          "memory_bytes" => memory_bytes,
           "ci_provider" => ci_provider,
-          "runner_image" => ENV.fetch("PERFGATE_RUNNER_IMAGE", nil),
-          "dependency_lock_hash" => dependency_lock_hash
+          "runner_image" => ENV["PERFGATE_RUNNER_IMAGE"] || ENV["ImageOS"] || "unmanaged",
+          "executor_identity" => executor_identity,
+          "source_revision" => source_revision,
+          "source_dirty" => source_dirty
         }
       end
 
@@ -51,13 +60,18 @@ module Perfgate
 
         ::ActiveRecord::Base.connection.adapter_name
       rescue StandardError
-        nil
+        "local"
       end
 
       def database_version_major
         return nil unless defined?(::ActiveRecord::Base)
 
-        version = ::ActiveRecord::Base.connection.database_version
+        connection = ::ActiveRecord::Base.connection
+        version = connection.database_version
+        if connection.adapter_name.to_s.downcase.include?("postgres") && version.is_a?(Integer)
+          return (version / 10_000).to_s
+        end
+
         version.to_s.split(".").first
       rescue StandardError, NotImplementedError
         nil
@@ -68,7 +82,10 @@ module Perfgate
       # number); Perfgate only ever stores its hash, never the raw value,
       # to avoid leaking application data into shared run artifacts.
       def dataset_hash(config)
-        raw = config.dataset_fingerprint.call
+        specification = config.dataset_spec.reject { |_key, value| value.nil? }
+        raw = specification.empty? ? config.dataset_fingerprint.call : JSON.generate(specification.sort.to_h)
+        return nil if raw.nil? || raw.to_s.empty?
+
         "sha256:#{Digest::SHA256.hexdigest(raw.to_s)}"
       end
 
@@ -77,7 +94,26 @@ module Perfgate
       end
 
       def cpu_model
-        ENV.fetch("PERFGATE_CPU_MODEL", nil)
+        return ENV["PERFGATE_CPU_MODEL"] if ENV["PERFGATE_CPU_MODEL"]
+        return File.read("/proc/cpuinfo")[/^model name\s*:\s*(.+)$/, 1] if File.file?("/proc/cpuinfo")
+
+        capture("sysctl", "-n", "machdep.cpu.brand_string")
+      end
+
+      def kernel_release
+        Etc.uname[:release]
+      rescue StandardError
+        nil
+      end
+
+      def memory_bytes
+        if File.file?("/proc/meminfo")
+          kilobytes = File.read("/proc/meminfo")[/^MemTotal:\s+(\d+)\s+kB$/, 1]
+          return kilobytes.to_i * 1024 if kilobytes
+        end
+
+        value = capture("sysctl", "-n", "hw.memsize")
+        value&.match?(/\A\d+\z/) ? value.to_i : nil
       end
 
       def ci_provider
@@ -85,12 +121,46 @@ module Perfgate
         return "gitlab_ci" if ENV["GITLAB_CI"]
         return "circleci" if ENV["CIRCLECI"]
 
+        "local"
+      end
+
+      def dependency_lock_hash
+        digest_first_existing(ENV["PERFGATE_LOCKFILE"], "Gemfile.lock")
+      end
+
+      def schema_hash
+        digest_first_existing(ENV["PERFGATE_SCHEMA_FILE"], "db/schema.rb", "db/structure.sql")
+      end
+
+      def instrumentation_hash(config)
+        payload = JSON.generate(config.enabled_metrics.map(&:to_s).sort)
+        "sha256:#{Digest::SHA256.hexdigest(payload)}"
+      end
+
+      def source_revision
+        ENV["GITHUB_SHA"] || capture("git", "rev-parse", "HEAD")
+      end
+
+      def source_dirty
+        output = capture("git", "status", "--porcelain")
+        output.nil? ? nil : !output.empty?
+      end
+
+      def executor_identity
+        ENV["RUNNER_NAME"] || ENV["CI_RUNNER_ID"] || Socket.gethostname
+      rescue StandardError
         nil
       end
 
-      # Deferred: hashing Gemfile.lock (or equivalent) is a small addition
-      # but out of Milestone 3's explicit scope; left nil until wired up.
-      def dependency_lock_hash
+      def digest_first_existing(*paths)
+        path = paths.compact.find { |candidate| File.file?(candidate) }
+        path ? "sha256:#{Digest::SHA256.file(path).hexdigest}" : nil
+      end
+
+      def capture(*command)
+        output, status = Open3.capture2e(*command)
+        status.success? ? output.strip : nil
+      rescue Errno::ENOENT
         nil
       end
     end

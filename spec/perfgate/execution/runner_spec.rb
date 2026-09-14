@@ -56,7 +56,8 @@ RSpec.describe Perfgate::Execution::Runner do
       workload(samples: 1, warmup: 0, metrics: %i[duration allocations sql_count]) { Array.new(500) { Object.new } }
     ).call
 
-    expect(result["samples"].first.keys).to eq(["duration_ns"])
+    expect(result["samples"].first.keys).to contain_exactly("duration_ns", "_meta")
+    expect(result["samples"].first.dig("_meta", "sequence")).to eq(0)
   end
 
   it "reports a failing workload as status: error instead of raising" do
@@ -65,5 +66,8 @@ RSpec.describe Perfgate::Execution::Runner do
     expect(result["status"]).to eq("error")
     expect(result["samples"]).to eq([])
     expect(result["error"]).to match(/boom/)
+    expect(result["exclusions"]).to contain_exactly(
+      hash_including("sequence" => 0, "phase" => "measurement", "status" => "error", "error" => /boom/)
+    )
   end
 end

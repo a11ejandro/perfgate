@@ -8,11 +8,9 @@ module Perfgate
     # Computes a per-workload definition hash from the properties that,
     # if changed, would make a historical run incomparable to a new one
     # (spec section 15.4): the workload's id, its sample/warmup counts,
-    # and the set of metrics it records. Hashing the workload's source
-    # code (to detect behavioral changes even when these properties are
-    # unchanged) is explicitly deferred -- the spec notes this requires
-    # normalizing formatting/whitespace-only diffs, which is a larger
-    # follow-up.
+    # the set of metrics it records, the assurance contract, and the
+    # source-file digest. The raw digest is intentionally conservative:
+    # even formatting-only edits require a fresh comparable reference.
     module WorkloadDefinition
       module_function
 
@@ -21,7 +19,9 @@ module Perfgate
           "id" => workload.id,
           "samples" => workload.samples,
           "warmup" => workload.warmup,
-          "metrics" => Array(workload.metrics).map(&:to_s).sort
+          "metrics" => Array(workload.metrics).map(&:to_s).sort,
+          "assurance" => workload.assurance.reject { |key, _value| key == "owner" },
+          "source_digest" => workload.source["digest"]
         }
         "sha256:#{Digest::SHA256.hexdigest(JSON.generate(payload))}"
       end

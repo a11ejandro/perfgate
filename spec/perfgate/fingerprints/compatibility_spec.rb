@@ -6,22 +6,7 @@ RSpec.describe Perfgate::Fingerprints::Compatibility do
   let(:config) { Perfgate::Config.default }
 
   let(:base_components) do
-    {
-      "ruby_engine" => "ruby",
-      "ruby_version" => "3.2.2",
-      "rails_version" => "7.1.0",
-      "baseline_version_major" => "0",
-      "database_adapter" => "SQLite",
-      "database_version_major" => "3",
-      "dataset_hash" => "sha256:abc",
-      "operating_system" => "darwin23",
-      "cpu_model" => "Apple M2",
-      "cpu_count" => "8",
-      "memory_bytes" => nil,
-      "ci_provider" => "github_actions",
-      "runner_image" => "ubuntu-22.04",
-      "dependency_lock_hash" => "sha256:def"
-    }
+    methodology_fingerprint
   end
 
   describe ".evaluate" do
@@ -51,6 +36,16 @@ RSpec.describe Perfgate::Fingerprints::Compatibility do
 
       expect(result["status"]).to eq("compatible_with_warnings")
       expect(result["differences"]).to include(hash_including("field" => "cpu_model", "severity" => "informational"))
+    end
+
+    it "is incompatible when required provenance is missing from both runs" do
+      components = methodology_fingerprint("dataset_hash" => nil)
+
+      result = described_class.evaluate(baseline_components: components, candidate_components: components,
+                                        config: config)
+
+      expect(result["status"]).to eq("incompatible")
+      expect(result["differences"]).to include(hash_including("field" => "dataset_hash", "reason" => "missing"))
     end
   end
 end

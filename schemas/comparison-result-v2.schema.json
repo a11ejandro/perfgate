@@ -1,0 +1,153 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://raw.githubusercontent.com/a11ejandro/perfgate/main/schemas/comparison-result-v2.schema.json",
+  "title": "Perfgate Comparison Result v2",
+  "type": "object",
+  "required": [
+    "schema_version", "created_at", "baseline_run_id", "candidate_run_id", "reference_design",
+    "compatibility", "decision", "workloads", "diagnostics", "analysis_configuration",
+    "policy", "reproduction_command"
+  ],
+  "properties": {
+    "schema_version": { "const": 2 },
+    "created_at": { "type": "string", "format": "date-time" },
+    "baseline_run_id": { "type": ["string", "null"] },
+    "candidate_run_id": { "type": ["string", "null"] },
+    "reference_design": { "type": ["string", "null"] },
+    "compatibility": { "$ref": "#/definitions/compatibility" },
+    "decision": { "$ref": "#/definitions/overall_decision" },
+    "workloads": { "type": "array", "items": { "$ref": "#/definitions/workload" } },
+    "diagnostics": { "type": "array", "items": { "$ref": "#/definitions/diagnostic" } },
+    "analysis_configuration": { "type": "object" },
+    "policy": {
+      "type": "object",
+      "required": ["version", "configuration"],
+      "properties": {
+        "version": { "const": 1 },
+        "configuration": { "type": "object" }
+      },
+      "additionalProperties": false
+    },
+    "reproduction_command": { "type": "string", "minLength": 1 }
+  },
+  "definitions": {
+    "overall_decision": {
+      "enum": ["pass", "warn", "fail", "inconclusive", "incomparable", "incompatible"]
+    },
+    "workload_decision": {
+      "enum": ["pass", "warn", "fail", "inconclusive", "incomparable", "new_workload", "removed_workload"]
+    },
+    "compatibility": {
+      "type": "object",
+      "required": ["status", "differences"],
+      "properties": {
+        "status": { "enum": ["compatible", "compatible_with_warnings", "incompatible"] },
+        "differences": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["field", "severity", "reason", "baseline", "candidate"],
+            "properties": {
+              "field": { "type": "string" },
+              "severity": { "enum": ["strict", "informational"] },
+              "reason": { "enum": ["missing", "changed", "stale"] },
+              "baseline": {},
+              "candidate": {}
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "workload": {
+      "type": "object",
+      "required": ["id", "decision", "metrics", "diagnostics"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "decision": { "$ref": "#/definitions/workload_decision" },
+        "assurance": { "type": "object" },
+        "execution_error": { "type": "boolean" },
+        "execution_status": {
+          "type": "object",
+          "required": ["baseline", "candidate"],
+          "properties": {
+            "baseline": { "enum": ["completed", "error"] },
+            "candidate": { "enum": ["completed", "error"] }
+          },
+          "additionalProperties": false
+        },
+        "metrics": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/definitions/metric" }
+        },
+        "diagnostics": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": false
+    },
+    "metric": {
+      "type": "object",
+      "required": [
+        "metric", "estimand", "unit", "baseline_median", "candidate_median", "change_percent",
+        "absolute_change", "baseline_sample_size", "candidate_sample_size", "interval", "p_value",
+        "thresholds", "rule", "practically_significant", "noisy", "decision"
+      ],
+      "properties": {
+        "metric": { "type": "string" },
+        "estimand": { "type": "string" },
+        "unit": { "type": "string" },
+        "baseline_median": { "type": ["number", "null"] },
+        "candidate_median": { "type": ["number", "null"] },
+        "baseline_summary": { "type": "object" },
+        "candidate_summary": { "type": "object" },
+        "change_percent": { "type": ["number", "null"] },
+        "absolute_change": { "type": ["number", "null"] },
+        "baseline_sample_size": { "type": "integer", "minimum": 0 },
+        "candidate_sample_size": { "type": "integer", "minimum": 0 },
+        "interval": {
+          "oneOf": [
+            { "type": "null" },
+            {
+              "type": "object",
+              "required": ["method", "confidence_level", "iterations", "absolute", "percent"],
+              "properties": {
+                "method": { "type": "string" },
+                "confidence_level": { "type": "number", "exclusiveMinimum": 0, "exclusiveMaximum": 1 },
+                "iterations": { "type": "integer", "minimum": 1 },
+                "absolute": { "$ref": "#/definitions/bounds" },
+                "percent": { "oneOf": [{ "type": "null" }, { "$ref": "#/definitions/bounds" }] }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "p_value": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+        "thresholds": { "type": ["object", "null"] },
+        "rule": { "type": "string" },
+        "practically_significant": { "type": "boolean" },
+        "noisy": { "type": "boolean" },
+        "decision": { "enum": ["pass", "warn", "fail", "inconclusive"] }
+      },
+      "additionalProperties": false
+    },
+    "bounds": {
+      "type": "object",
+      "required": ["lower", "upper"],
+      "properties": {
+        "lower": { "type": "number" },
+        "upper": { "type": "number" }
+      },
+      "additionalProperties": false
+    },
+    "diagnostic": {
+      "type": "object",
+      "required": ["code", "message"],
+      "properties": {
+        "code": { "type": "string" },
+        "message": { "type": "string" }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

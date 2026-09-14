@@ -1,0 +1,130 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://raw.githubusercontent.com/a11ejandro/perfgate/main/schemas/run-result-v2.schema.json",
+  "title": "Perfgate Run Result v2",
+  "type": "object",
+  "required": [
+    "schema_version", "run_id", "created_at", "fingerprint", "experiment_plan",
+    "dataset", "analysis_configuration", "policy", "reproduction_command", "workloads"
+  ],
+  "properties": {
+    "schema_version": { "const": 2 },
+    "run_id": { "type": "string", "minLength": 1 },
+    "created_at": { "type": "string", "format": "date-time" },
+    "fingerprint": {
+      "type": "object",
+      "required": [
+        "ruby_engine", "ruby_version", "rails_version", "baseline_version_major", "database_adapter",
+        "database_version_major", "dataset_hash", "dependency_lock_hash", "schema_hash", "instrumentation_hash",
+        "operating_system", "kernel_release", "cpu_model", "cpu_count", "memory_bytes", "ci_provider",
+        "runner_image", "executor_identity", "source_revision", "source_dirty"
+      ],
+      "additionalProperties": true
+    },
+    "experiment_plan": {
+      "type": "object",
+      "required": ["reference_design", "samples", "warmup", "seed", "order", "isolation", "metrics"],
+      "properties": {
+        "reference_design": { "enum": ["historical_stored_baseline"] },
+        "samples": { "type": "integer", "minimum": 3 },
+        "warmup": { "type": "integer", "minimum": 0 },
+        "seed": { "type": "integer" },
+        "order": { "enum": ["defined", "random"] },
+        "isolation": { "enum": ["process_per_workload"] },
+        "metrics": { "type": "array", "items": { "type": "string" }, "minItems": 1 }
+      },
+      "additionalProperties": false
+    },
+    "dataset": {
+      "type": "object",
+      "properties": {
+        "id": {}, "schema_version": {}, "generator_version": {}, "seed": {}, "scale": {},
+        "cardinality": {}, "skew": {}, "null_rates": {}, "relationships": {}, "cache_state": {}
+      },
+      "additionalProperties": false
+    },
+    "analysis_configuration": { "type": "object" },
+    "policy": {
+      "type": "object",
+      "required": ["version", "configuration"],
+      "properties": { "version": { "const": 1 }, "configuration": { "type": "object" } },
+      "additionalProperties": false
+    },
+    "reproduction_command": { "type": "string", "minLength": 1 },
+    "workloads": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id", "status", "error", "definition_hash", "assurance", "source",
+          "exclusions", "samples", "summary"
+        ],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "status": { "enum": ["completed", "error"] },
+          "error": { "type": ["string", "null"] },
+          "definition_hash": { "type": ["string", "null"] },
+          "assurance": {
+            "type": "object",
+            "properties": {
+              "claim": { "type": ["string", "null"] },
+              "owner": { "type": ["string", "null"] },
+              "dataset": { "type": "object" },
+              "metric_directions": { "type": "object" },
+              "minimum_effects": { "type": "object" }
+            },
+            "additionalProperties": false
+          },
+          "source": {
+            "type": "object",
+            "properties": {
+              "location": { "type": ["string", "null"] },
+              "digest": { "type": ["string", "null"] }
+            },
+            "additionalProperties": false
+          },
+          "exclusions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["sequence", "phase", "started_at", "monotonic_started_ns", "status", "error"],
+              "properties": {
+                "sequence": { "type": "integer", "minimum": 0 },
+                "phase": { "enum": ["warmup", "measurement"] },
+                "started_at": { "type": "string", "format": "date-time" },
+                "monotonic_started_ns": { "type": "integer", "minimum": 0 },
+                "status": { "const": "error" },
+                "error": { "type": "string" }
+              },
+              "additionalProperties": false
+            }
+          },
+          "samples": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "duration_ns": { "type": "number" },
+                "sql_count": { "type": "number" },
+                "sql_duration_ns": { "type": "number" },
+                "allocations": { "type": "number" },
+                "gc_count": { "type": "number" },
+                "gc_minor_count": { "type": "number" },
+                "gc_major_count": { "type": "number" },
+                "_meta": {
+                  "type": "object",
+                  "required": ["sequence", "phase", "started_at", "monotonic_started_ns", "status"]
+                }
+              },
+              "required": ["_meta"],
+              "additionalProperties": false
+            }
+          },
+          "summary": { "type": "object" }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

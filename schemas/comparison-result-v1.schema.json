@@ -1,7 +1,17 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://raw.githubusercontent.com/a11ejandro/perfgate/main/schemas/comparison-result-v1.schema.json",
-  "title": "Perfgate Comparison Result v1",
-  "description": "Placeholder schema. To be defined per section 14.2 of the technical specification.",
-  "type": "object"
+  "title": "Perfgate Comparison Result v1 (legacy)",
+  "type": "object",
+  "required": ["schema_version", "baseline_run_id", "candidate_run_id", "compatibility", "decision", "workloads"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "baseline_run_id": { "type": ["string", "null"] },
+    "candidate_run_id": { "type": ["string", "null"] },
+    "compatibility": { "type": "object" },
+    "decision": { "enum": ["pass", "warn", "fail", "inconclusive", "incompatible"] },
+    "workloads": { "type": "array", "items": { "type": "object" } },
+    "diagnostics": { "type": "array" }
+  },
+  "additionalProperties": false
 }

@@ -24,7 +24,11 @@ module Perfgate
       end
 
       def default_builder
-        WorkloadBuilder.new(defaults: Perfgate.configuration.execution_defaults)
+        WorkloadBuilder.new(
+          defaults: Perfgate.configuration.execution_defaults,
+          dataset: Perfgate.configuration.dataset_spec,
+          practical_thresholds: Perfgate.configuration.practical_thresholds
+        )
       end
     end
   end

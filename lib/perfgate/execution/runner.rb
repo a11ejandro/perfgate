@@ -2,6 +2,7 @@
 
 require_relative "sample_context"
 require_relative "../fingerprints/workload_definition"
+require "time"
 
 module Perfgate
   module Execution
@@ -23,26 +24,39 @@ module Perfgate
       end
 
       def call
-        @workload.warmup.times { run_once }
+        samples = []
+        @active_observation = nil
+        @workload.warmup.times { |index| run_once(sequence: index, phase: "warmup") }
 
-        samples = Array.new(@workload.samples) { run_once }
+        @workload.samples.times { |index| samples << run_once(sequence: index, phase: "measurement") }
 
-        result("completed", samples, nil)
+        result("completed", samples, nil, [])
       rescue StandardError => e
-        result("error", [], "#{e.class}: #{e.message}")
+        error = "#{e.class}: #{e.message}"
+        exclusions = @active_observation ? [@active_observation.merge("status" => "error", "error" => error)] : []
+        result("error", samples || [], error, exclusions)
       end
 
       private
 
-      def result(status, samples, error)
+      def result(status, samples, error, exclusions)
         {
           "id" => @workload.id, "status" => status, "samples" => samples, "error" => error,
-          "definition_hash" => Fingerprints::WorkloadDefinition.hash_for(@workload)
+          "definition_hash" => Fingerprints::WorkloadDefinition.hash_for(@workload),
+          "assurance" => @workload.assurance,
+          "source" => @workload.source,
+          "exclusions" => exclusions
         }
       end
 
-      def run_once
+      def run_once(sequence: 0, phase: "measurement")
         data = nil
+        started_at = Time.now.utc.iso8601(6)
+        monotonic_started_ns = Process.clock_gettime(Process::CLOCK_MONOTONIC, :nanosecond)
+        @active_observation = {
+          "sequence" => sequence, "phase" => phase, "started_at" => started_at,
+          "monotonic_started_ns" => monotonic_started_ns
+        }
 
         SampleContext.with_new(metrics: @workload.metrics) do |context|
           wall_start = Process.clock_gettime(Process::CLOCK_MONOTONIC)
@@ -50,9 +64,19 @@ module Perfgate
           wall_elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - wall_start
 
           data = context.data.dup
-          data["duration_ns"] ||= (wall_elapsed * 1_000_000_000).round
+          if @workload.metrics.map(&:to_sym).include?(:duration)
+            data["duration_ns"] ||= (wall_elapsed * 1_000_000_000).round
+          end
+          data["_meta"] = {
+            "sequence" => sequence,
+            "phase" => phase,
+            "started_at" => started_at,
+            "monotonic_started_ns" => monotonic_started_ns,
+            "status" => "completed"
+          }
         end
 
+        @active_observation = nil
         data
       end
     end

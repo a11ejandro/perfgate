@@ -7,10 +7,12 @@ RSpec.describe Perfgate::Serialization::RunResult do
     it "wraps workload results with schema_version, run_id, and created_at" do
       result = described_class.build([])
 
-      expect(result["schema_version"]).to eq(1)
+      expect(result["schema_version"]).to eq(2)
       expect(result["run_id"]).to match(/\A[0-9a-f-]{36}\z/)
       expect(Time.iso8601(result["created_at"])).to be_a(Time)
       expect(result["workloads"]).to eq([])
+      expect(result["experiment_plan"]["reference_design"]).to eq("historical_stored_baseline")
+      expect(result).to include("dataset", "analysis_configuration", "policy", "reproduction_command")
     end
 
     it "generates a distinct run_id on each call" do

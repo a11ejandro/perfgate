@@ -28,5 +28,13 @@ RSpec.describe Perfgate::Fingerprints::Components do
       expect(described_class.collect(config: config)["dataset_hash"])
         .to eq(described_class.collect(config: config)["dataset_hash"])
     end
+
+
+    it "normalizes PostgreSQL's numeric server version to a major version" do
+      connection = instance_double("ActiveRecord connection", adapter_name: "PostgreSQL", database_version: 170_010)
+      stub_const("ActiveRecord::Base", class_double("ActiveRecord::Base", connection: connection))
+
+      expect(described_class.database_version_major).to eq("17")
+    end
   end
 end

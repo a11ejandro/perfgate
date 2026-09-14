@@ -26,10 +26,19 @@ module Perfgate
 
           baseline_value = baseline_components[field]
           candidate_value = candidate_components[field]
+          if missing?(baseline_value) || missing?(candidate_value)
+            next({ "field" => field, "severity" => severity, "reason" => "missing",
+                   "baseline" => baseline_value, "candidate" => candidate_value })
+          end
           next if baseline_value == candidate_value
 
-          { "field" => field, "severity" => severity, "baseline" => baseline_value, "candidate" => candidate_value }
+          { "field" => field, "severity" => severity, "reason" => "changed",
+            "baseline" => baseline_value, "candidate" => candidate_value }
         end
+      end
+
+      def missing?(value)
+        value.nil? || (value.respond_to?(:empty?) && value.empty?)
       end
 
       def status_for(differences)
