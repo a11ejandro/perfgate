@@ -8,6 +8,10 @@ require "perfgate/serialization/run_result"
 require "perfgate/config"
 
 RSpec.describe Perfgate::CLI::RunComparisonReporter do
+  before do
+    allow(Perfgate::Fingerprints::Components).to receive(:collect).and_return(methodology_fingerprint)
+  end
+
   around do |example|
     Dir.mktmpdir { |dir| @tmp = dir and example.run }
   end
@@ -15,7 +19,9 @@ RSpec.describe Perfgate::CLI::RunComparisonReporter do
   def write_run(dir, samples)
     workload_result = {
       "id" => "checkout_flow", "status" => "completed", "error" => nil,
-      "definition_hash" => "sha256:same", "samples" => samples.map { |v| { "duration_ns" => v } }
+      "definition_hash" => "sha256:same", "assurance" => methodology_assurance,
+      "source" => methodology_source,
+      "samples" => samples.map { |v| { "duration_ns" => v } }
     }
     run_result = Perfgate::Serialization::RunResult.build([workload_result])
     FileUtils.mkdir_p(dir)
@@ -56,6 +62,7 @@ RSpec.describe Perfgate::CLI::RunComparisonReporter do
   end
 
   it "exits 1 on a seeded regression and prints the console report by default" do
+    config.to_h[:policy][:mode] = "blocking"
     baseline_dir = File.join(@tmp, "reference")
     write_run(baseline_dir, [980, 1020, 990, 1010, 1000, 1030, 970, 1015].map { |v| v * 100_000 })
     candidate = write_run(File.join(@tmp, "candidate"),

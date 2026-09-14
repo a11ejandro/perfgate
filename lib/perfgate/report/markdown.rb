@@ -2,7 +2,7 @@
 
 module Perfgate
   module Report
-    # Renders the schema_version 1 comparison-result document (plus its
+    # Renders the schema_version 2 comparison-result document (plus its
     # Policy::Engine verdict) as a Markdown report, per spec 20.2: the
     # overall decision, run identities, compatibility status, a
     # per-workload/per-metric table, noise warnings, diagnostics, a
@@ -20,14 +20,20 @@ module Perfgate
           identities(comparison_result),
           "**Compatibility:** #{comparison_result.dig("compatibility", "status")}",
           workloads_table(comparison_result),
+          metric_rules_section(comparison_result),
+          compatibility_details(comparison_result),
           diagnostics_section(comparison_result),
+          policy_rule_section(policy_result),
+          reproduction_section(comparison_result),
           machine_readable_section(comparison_path),
           exit_code_section(policy_result)
         ].compact.join("\n\n")
       end
 
       def header(policy_result)
-        "## Perfgate Performance Assurance\n\n**Overall:** #{policy_result["status"].upcase}"
+        "## Perfgate Performance Assurance\n\n" \
+          "**Overall policy:** #{policy_result["status"].upcase}\n\n" \
+          "**Evidence:** #{policy_result["evidence_status"].to_s.upcase}"
       end
 
       def identities(comparison_result)
@@ -43,7 +49,8 @@ module Perfgate
       end
 
       def table_header
-        "| Workload | Metric | Baseline | Candidate | Change | Decision |\n|---|---|---|---|---|---|"
+        "| Workload | Metric | Baseline | Candidate | Change | Interval | Samples | Decision |\n" \
+          "|---|---|---|---|---|---|---|---|"
       end
 
       def workload_rows(workload)
@@ -53,14 +60,15 @@ module Perfgate
       end
 
       def summary_row(workload)
-        "| #{workload["id"]} | - | - | - | - | #{workload["decision"].upcase} |"
+        "| #{workload["id"]} | - | - | - | - | - | - | #{workload["decision"].upcase} |"
       end
 
       def metric_row(workload_id, name, metric)
         noise = metric["noisy"] ? " ⚠️ noisy" : ""
+        samples = "#{metric["baseline_sample_size"] || 0}/#{metric["candidate_sample_size"] || 0}"
         "| #{workload_id} | #{name} | #{format_value(name, metric["baseline_median"])} | " \
           "#{format_value(name, metric["candidate_median"])} | #{format_change(metric["change_percent"])} | " \
-          "#{metric["decision"].upcase}#{noise} |"
+          "#{format_interval(metric)} | #{samples} | #{metric["decision"].upcase}#{noise} |"
       end
 
       def format_change(percent)
@@ -71,6 +79,32 @@ module Perfgate
         return "n/a" if value.nil?
 
         DURATION_METRICS.include?(name) ? format("%.2fms", value / 1_000_000.0) : value.to_s
+      end
+
+      def format_interval(metric)
+        percent = metric.dig("interval", "percent")
+        return "n/a" unless percent
+
+        level = metric.dig("interval", "confidence_level")
+        format("%.1f%% [%+.1f%%, %+.1f%%]", level.to_f * 100, percent["lower"], percent["upper"])
+      end
+
+      def compatibility_details(comparison_result)
+        differences = comparison_result.dig("compatibility", "differences") || []
+        return nil if differences.empty?
+
+        "**Comparability reservations:**\n" + differences.map do |difference|
+          "- `#{difference["field"]}`: #{difference["reason"] || "changed"} (#{difference["severity"]})"
+        end.join("\n")
+      end
+
+      def metric_rules_section(comparison_result)
+        rules = comparison_result.fetch("workloads", []).flat_map do |workload|
+          workload.fetch("metrics", {}).filter_map do |name, metric|
+            "- `#{workload["id"]}.#{name}`: #{metric["rule"]}" if metric["rule"]
+          end
+        end
+        rules.empty? ? nil : "**Decision rules:**\n#{rules.join("\n")}"
       end
 
       def diagnostics_section(comparison_result)
@@ -90,6 +124,15 @@ module Perfgate
         return nil unless comparison_path
 
         "Machine-readable result: `#{comparison_path}`"
+      end
+
+      def policy_rule_section(policy_result)
+        policy_result["rule"] ? "**Policy rule:** #{policy_result["rule"]}" : nil
+      end
+
+      def reproduction_section(comparison_result)
+        command = comparison_result["reproduction_command"]
+        command ? "**Reproduce:** `#{command}`" : nil
       end
 
       def exit_code_section(policy_result)

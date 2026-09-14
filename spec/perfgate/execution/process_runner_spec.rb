@@ -36,4 +36,18 @@ RSpec.describe Perfgate::Execution::ProcessRunner do
     expect(result["status"]).to eq("error")
     expect(result["error"]).to match(/exited without a result/)
   end
+
+
+  it "reloads RSpec-backed workloads in a clean process instead of forking loaded native state" do
+    source = File.expand_path("../../fixtures/subprocess_workload.rb", __dir__)
+    reloadable = Perfgate::Workloads::Workload.new(
+      id: "fixture.clean_subprocess", samples: 3, warmup: 0, metrics: [:duration],
+      source: { "location" => "#{source}:6", "digest" => "sha256:fixture" }
+    ) { raise "the inherited workload must not execute" }
+
+    result = described_class.new(reloadable).call
+
+    expect(result["status"]).to eq("completed")
+    expect(result["samples"].size).to eq(8)
+  end
 end

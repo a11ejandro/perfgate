@@ -23,13 +23,14 @@ RSpec.describe Perfgate::Report::Console do
       ]
     }
   end
-  let(:policy_result) { { "status" => "fail", "exit_code" => 1 } }
+  let(:policy_result) { { "status" => "fail", "evidence_status" => "fail", "exit_code" => 1 } }
 
   describe ".render" do
     subject(:console) { described_class.render(comparison_result: comparison_result, policy_result: policy_result) }
 
     it "states the overall decision and run identities" do
-      expect(console).to include("Overall: FAIL")
+      expect(console).to include("Overall policy: FAIL")
+      expect(console).to include("Evidence: FAIL")
       expect(console).to include("Baseline: base-run-id")
       expect(console).to include("Candidate: cand-run-id")
     end
@@ -45,11 +46,11 @@ RSpec.describe Perfgate::Report::Console do
     end
 
     it "formats duration metrics in milliseconds" do
-      expect(console).to match(/Duration\s+281 ms . 337 ms\s+\+19\.9%\s+FAIL/)
+      expect(console).to match(/Duration\s+281 ms . 337 ms\s+\+19\.9%.*FAIL/)
     end
 
     it "leaves count metrics unconverted" do
-      expect(console).to match(/SQL queries\s+14 . 19\s+\+35\.7%\s+FAIL/)
+      expect(console).to match(/SQL queries\s+14 . 19\s+\+35\.7%.*FAIL/)
     end
 
     it "prints a likely-signal line with the workload's diagnostics" do

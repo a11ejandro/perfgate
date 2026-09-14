@@ -27,7 +27,7 @@ RSpec.describe Perfgate::Report::Markdown do
       "diagnostics" => []
     }
   end
-  let(:policy_result) { { "status" => "fail", "exit_code" => 1 } }
+  let(:policy_result) { { "status" => "fail", "evidence_status" => "fail", "exit_code" => 1 } }
 
   describe ".render" do
     subject(:markdown) do
@@ -36,7 +36,8 @@ RSpec.describe Perfgate::Report::Markdown do
     end
 
     it "states the overall decision" do
-      expect(markdown).to include("**Overall:** FAIL")
+      expect(markdown).to include("**Overall policy:** FAIL")
+      expect(markdown).to include("**Evidence:** FAIL")
     end
 
     it "identifies the baseline and candidate runs" do
@@ -48,8 +49,8 @@ RSpec.describe Perfgate::Report::Markdown do
     end
 
     it "renders a table row per workload metric with formatted values" do
-      expect(markdown).to include("| checkout.create_order | duration | 281.00ms | 337.00ms | +19.9% | FAIL |")
-      expect(markdown).to include("| checkout.create_order | sql_count | 14 | 19 | +35.7% | FAIL |")
+      expect(markdown).to include("| checkout.create_order | duration | 281.00ms | 337.00ms | +19.9% | n/a | 0/0 | FAIL |")
+      expect(markdown).to include("| checkout.create_order | sql_count | 14 | 19 | +35.7% | n/a | 0/0 | FAIL |")
     end
 
     it "surfaces workload diagnostics" do

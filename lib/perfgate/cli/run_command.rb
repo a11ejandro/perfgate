@@ -37,8 +37,16 @@ module Perfgate
 
       def load_configuration
         config = Perfgate::Config.load(@options[:config])
+        apply_cli_overrides(config)
+        Perfgate::Config::Validator.call(config.to_h)
         Perfgate.configuration = config
         config
+      end
+
+      def apply_cli_overrides(config)
+        config.to_h[:execution][:seed] = @options[:seed] if @options.key?(:seed)
+        config.to_h[:profile] = @options[:profile] if @options[:profile]
+        config.to_h[:policy][:fail_on] = @options[:fail_on] if @options[:fail_on]
       end
 
       def execute(config)
@@ -46,8 +54,26 @@ module Perfgate
         load_spec_files
         Perfgate::RSpec::Discovery.call
 
-        results = Perfgate.registry.map { |workload| Execution::ProcessRunner.new(workload).call }
+        workloads = selected_workloads(config)
+        results = execute_workloads(workloads, config)
         Serialization::RunResult.build(results, config: config)
+      end
+
+      def selected_workloads(config)
+        workloads = Perfgate.registry.to_a
+        workloads.select! { |workload| File.fnmatch?(@options[:only], workload.id) } if @options[:only]
+        workloads.shuffle!(random: Random.new(config.execution_seed)) if config.execution_order == "random"
+        workloads
+      end
+
+      def execute_workloads(workloads, config)
+        results = []
+        workloads.each do |workload|
+          result = Execution::ProcessRunner.new(workload, config_path: @options[:config]).call
+          results << result
+          break if config.execution_fail_fast && result["status"] == "error"
+        end
+        results
       end
 
       def save(config, run_result)
@@ -100,7 +126,7 @@ module Perfgate
       end
 
       def exit_code(run_result)
-        run_result["workloads"].any? { |w| w["status"] == "error" } ? 1 : 0
+        run_result["workloads"].any? { |w| w["status"] == "error" } ? 3 : 0
       end
 
       def write_run_only_summary(run_result, run_dir)

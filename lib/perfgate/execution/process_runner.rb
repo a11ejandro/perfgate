@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 require "json"
+require "rbconfig"
+require "tempfile"
 require_relative "runner"
 
 module Perfgate
@@ -18,12 +20,15 @@ module Perfgate
     # server-based test database. This mirrors an existing constraint on
     # Rails' own parallel test runners and isn't specific to Perfgate.
     class ProcessRunner
-      def initialize(workload, runner_class: Runner)
+      def initialize(workload, runner_class: Runner, config_path: "perfgate.yml")
         @workload = workload
         @runner_class = runner_class
+        @config_path = config_path
       end
 
       def call
+        return spawn_clean_process if reloadable_workload?
+
         ensure_fork_supported!
         release_active_record_connections
 
@@ -38,6 +43,35 @@ module Perfgate
       end
 
       private
+
+      def reloadable_workload?
+        @runner_class == Runner && source_file && @workload.source["digest"]
+      end
+
+      def source_file
+        @source_file ||= @workload.source["location"].to_s.sub(/:\d+\z/, "")
+        @source_file unless @source_file.empty?
+      end
+
+      def spawn_clean_process
+        Tempfile.create(["perfgate-result", ".json"]) do |result_file|
+          Tempfile.create(["perfgate-child", ".log"]) do |log_file|
+            result_path = result_file.path
+            result_file.close
+            pid = Process.spawn(*subprocess_command(result_path), out: log_file.path, err: [:child, :out])
+            _pid, status = Process.waitpid2(pid)
+            payload = File.exist?(result_path) ? File.read(result_path) : ""
+            parse_result(payload, status, child_log: File.read(log_file.path))
+          end
+        end
+      end
+
+      def subprocess_command(result_path)
+        library_path = File.expand_path("../..", __dir__)
+        expression = "status = Perfgate::Execution::SubprocessEntry.call(ARGV); exit!(status)"
+        [RbConfig.ruby, "-I#{library_path}", "-rperfgate/execution/subprocess_entry", "-e", expression,
+         @config_path, source_file, @workload.id, result_path]
+      end
 
       def ensure_fork_supported!
         return if Process.respond_to?(:fork)
@@ -64,13 +98,16 @@ module Perfgate
         end
       end
 
-      def parse_result(payload, status)
+      def parse_result(payload, status, child_log: nil)
         if payload.nil? || payload.empty?
+          process_status = status.exitstatus || "signal #{status.termsig}"
+          detail = child_log.to_s.strip
+          detail = detail[-2_000, 2_000] if detail.length > 2_000
           {
             "id" => @workload.id,
             "status" => "error",
             "samples" => [],
-            "error" => "workload process exited without a result (exit status #{status.exitstatus})"
+            "error" => "workload process exited without a result (#{process_status})#{detail.empty? ? "" : ": #{detail}"}"
           }
         else
           JSON.parse(payload)
