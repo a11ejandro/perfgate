@@ -11,6 +11,11 @@ show the intended `perfgate:`-tagged, `Perfgate.measure`-wrapped shape
 once a real Rails app backs this directory; they are not executed by
 CI yet since there's no app for them to run against.
 
+`perfgate.yml` declares the fixture dataset and keeps the example in advisory
+mode. A real deployment should replace those identifiers with its reproducible
+dataset recipe and opt into blocking only after A/A and injected-regression
+calibration on its own runners.
+
 ## CI usage
 
 `.github/workflows/perfgate.yml` reproduces the conceptual workflow
@@ -28,11 +33,9 @@ This is deliberately the MVP-level version the spec calls for:
   `continue-on-error: true` covers the very first run, before any such
   artifact exists; `perfgate run --compare` then reports a missing
   baseline instead of crashing.
-- No provenance checking (spec 19.3) beyond what
-  `actions/download-artifact` already gives you for free -- there's no
-  verification here that the artifact came from a successful run, the
-  configured default branch, or a commit at or before the PR's base.
-  A real deployment should tighten this with a small composite action
-  once one exists.
+- Perfgate verifies bundle checksums and run fingerprints, but this workflow
+  does not authenticate that the downloaded artifact came from a successful
+  protected-branch run at or before the PR's merge base. A real deployment
+  should tighten artifact selection and trust with a dedicated action.
 - Job summary only (spec 19.2); no sticky PR comment or check
   annotation yet.

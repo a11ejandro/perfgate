@@ -58,8 +58,8 @@ Samples: 8 baseline / 8 candidate
 
 Wall-clock duration on a shared CI runner is noisy. Two runs of
 identical code can easily differ by 10-20% just from scheduling noise.
-Perfgate treats duration as one signal among several, downgrades
-low-confidence results instead of crying wolf, and refuses to compare
+Perfgate treats duration as one signal among several, reports a bootstrap
+interval against a declared minimum effect, and refuses to compare
 runs from environments it isn't confident are equivalent -- a different
 Ruby or Rails version, a changed workload definition, or an
 incompatible dataset all mark a comparison `incompatible` rather than
@@ -81,9 +81,11 @@ service in the loop.
 gem "perfgate", group: :test
 ```
 
-Tag an existing request spec or job spec with `perfgate: true`, wrap the
-part you care about in `Perfgate.measure { ... }`, and you have your
-first workload. See
+Declare a reproducible dataset, then tag an existing request spec or job spec
+with a `perfgate` assurance claim and owner. Wrap the part you care about in
+`Perfgate.measure { ... }`, and you have your first workload. Results remain
+advisory until you explicitly enable blocking after A/A and injected-regression
+calibration. See
 [docs/onboarding.md](onboarding.md) for a full walkthrough, including
 wiring up the GitHub Actions workflow.
 

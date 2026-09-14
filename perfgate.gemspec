@@ -12,7 +12,8 @@ Gem::Specification.new do |spec|
   spec.description = "Perfgate converts selected RSpec examples into repeatable performance " \
                      "workloads, measures application-level signals (duration, SQL activity, " \
                      "allocations, GC), compares a pull request against a compatible " \
-                     "default-branch baseline, and produces a clear CI merge-gate decision."
+                     "default-branch baseline, and produces auditable evidence with an " \
+                     "advisory-by-default CI policy."
   spec.homepage = "https://github.com/a11ejandro/perfgate"
   spec.license = "Apache-2.0"
   spec.required_ruby_version = ">= 3.1.0"

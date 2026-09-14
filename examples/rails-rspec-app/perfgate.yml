@@ -1,0 +1,17 @@
+version: 1
+
+dataset:
+  id: example-fixtures
+  schema_version: "1"
+  generator_version: "2026-09"
+  seed: 12345
+  scale: small
+  cache_state: cold
+
+comparison:
+  max_baseline_age_seconds: 604800
+
+policy:
+  # Keep this advisory until A/A and injected-regression trials establish
+  # acceptable false-decision rates and power on the actual CI runners.
+  mode: advisory

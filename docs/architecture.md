@@ -26,8 +26,8 @@ RSpec examples
          │  SampleContext per metric
          ▼
 ┌────────────────┐
-│  Statistics    │  statistics/{summary,mann_whitney_u}.rb
-│                │  min/p50/p95/max; Mann-Whitney U for regression significance
+│  Statistics    │  statistics/{summary,bootstrap_interval,mann_whitney_u}.rb
+│                │  robust summaries; bootstrap effect interval; rank-test diagnostic
 └───────┬────────┘
         │  Summary structs
         ▼
@@ -43,7 +43,7 @@ RSpec examples
 │                      │  statistical_metric_decision,deterministic_metric_decision,
 │                      │  diagnostics}.rb
 │                      │
-│  Per-metric:         │  Duration/allocations → statistical (Mann-Whitney + floor)
+│  Per-metric:         │  Duration/allocations → interval + directional MEI
 │                      │  SQL count            → deterministic (exact delta)
 │                      │  GC                   → informational only
 └──────────┬───────────┘
@@ -99,15 +99,29 @@ the environment fingerprint is incompatible the whole comparison is INCOMPARABLE
 if an individual workload's definition changed it is flagged as modified. This
 prevents silent comparisons across incompatible runs.
 
-**Two comparison strategies.** Continuous metrics (duration, allocations) use
-Mann-Whitney U so random OS noise does not produce false alarms. SQL query count
-is deterministic — it should not vary between runs on the same code, so any
-change is significant.
+**Two comparison strategies.** Continuous metrics (duration, SQL duration, and
+allocations) use a deterministic independent-sample bootstrap interval for the
+difference in medians. The reported Mann-Whitney p-value is diagnostic and does
+not drive the decision. SQL query count uses an exact rule only when every
+observation within each run is identical; otherwise its result is INCONCLUSIVE.
 
-**Practical floor beats statistics alone.** A statistically-significant
-difference that is smaller than `minimum_absolute_ms` (default 10 ms) is
-downgraded from FAIL to WARN. A sub-noise-ratio change is downgraded further
-to PASS. This prevents microscopic regressions from blocking PRs.
+**Intervals and practical materiality are one rule.** PASS requires the upper
+interval bound to exclude the warning MEI. FAIL requires the lower bound to
+exceed the failure MEI. Overlap becomes WARN when the point estimate is
+material and INCONCLUSIVE otherwise. Thresholds are directional, so an
+improvement never becomes a regression because its absolute magnitude is
+large. Bonferroni adjustment controls the configured family-wise confidence
+across stochastic metrics in a comparison.
+
+**Advisory before blocking.** Evidence and organizational policy are separate.
+The default policy preserves a FAIL evidence state but returns a non-blocking
+WARN until `policy.mode: blocking` is explicitly selected after workload- and
+environment-specific validation.
+
+**Reference-design limitation.** Version 2 evidence declares the implemented
+`historical_stored_baseline` design, preserves observation order/timestamps,
+and rejects stale or incompatible references. Same-worker randomized blocks
+and interleaved control/candidate execution remain future work.
 
 **One source of truth for thresholds.** `perfgate.yml` controls every
 comparison and policy knob. Environment variables may override values for CI

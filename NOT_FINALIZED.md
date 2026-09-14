@@ -15,14 +15,28 @@
 
 ## Memory metric not implemented
 
-`metrics.memory` config key exists and is accepted by the schema validator,
-but the collector is absent. `Instrumentation::REGISTRY` has no `:memory` entry.
+`metrics.memory` remains in the configuration schema as a discoverable future
+option, but enabling it now raises a configuration error because the collector
+is absent. `Instrumentation::REGISTRY` has no `:memory` entry.
 
 File: `lib/perfgate/instrumentation.rb:19` — comment says "not yet implemented".
 
-Safe to ship as-is (the config key silently has no effect), but the docs
-(`docs/compatibility.md`) describe it as opt-in and experimental — should either
-implement it or document clearly that it is deferred.
+This is deliberately fail-closed: a requested metric must never have no effect
+without warning.
+
+---
+
+## Stronger reference designs and empirical calibration
+
+The implemented reference design is an independent historical stored baseline.
+Evidence records that design, observation order/timestamps, a maximum baseline
+age, and expanded provenance, but Perfgate does not yet orchestrate same-worker
+randomized blocks or interleaved control/candidate trials.
+
+No repository-only change can establish false-decision rate or detection power
+for a team's runners and workloads. Direct gating remains opt-in through
+`policy.mode: blocking`; teams must first run A/A and injected-regression trials
+through their actual CI workflow.
 
 ---
 

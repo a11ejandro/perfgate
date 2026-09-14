@@ -1,5 +1,18 @@
 ## [Unreleased]
 
+- Replace p-value-driven comparisons with Bonferroni-adjusted bootstrap
+  intervals and directional minimum-effect rules; retain Mann-Whitney only as
+  a named diagnostic and correct its tie variance.
+- Add evidence-contract v2 with assurance claims, expanded provenance,
+  experiment/analysis/policy snapshots, observation metadata, exclusions,
+  exact decision rules, sample counts, reproduction commands, and JSON Schemas.
+- Propagate underpowered, missing, unstable, empty, and execution-error evidence
+  as INCONCLUSIVE or INCOMPARABLE instead of allowing an overall PASS.
+- Add stale-baseline enforcement, comparison digests, effective CLI overrides,
+  deterministic workload filtering/order, and fail-fast execution.
+- Default policy to advisory; direct CI blocking now requires explicit
+  `policy.mode: blocking` after environment-specific calibration.
+
 ## [0.1.0] - 2026-08-26
 
 - Core execution engine: CLI, configuration loader, RSpec discovery

@@ -20,15 +20,21 @@ Status key: ✅ done · 🚧 in progress · ⬜ not started
    cumulative duration (ActiveSupport::Notifications), Ruby object allocations
    (GC.stat delta), GC activity
 
-✅ Statistics — Mann-Whitney U with tie correction, extended summary
-   (min/p50/p95/p99/max/count)
+✅ Statistics — independent bootstrap interval for median change, directional
+   MEI decisions, Bonferroni family adjustment, Mann-Whitney diagnostic with tie
+   correction, extended robust summaries
 
-✅ Fingerprinting — environment fingerprint (Ruby version, Rails version,
-   platform, dataset version) + per-workload definition hash; compatibility
-   engine that blocks incomparable runs
+✅ Fingerprinting — runtime/database/lockfile/schema/instrumentation/dataset
+   provenance + source-aware per-workload definition hash; missing strict
+   provenance and stale baselines are incomparable
 
-✅ Regression policy — statistical + practical-floor dual guard; noise-ratio
-   downgrade; deterministic SQL comparison; configurable thresholds
+✅ Regression policy — five evidence outcomes, exact recorded rule, advisory
+   default, explicit blocking opt-in, and deterministic SQL comparison only
+   after within-run stability is established
+
+✅ Evidence contract v2 — raw observations with order/timestamps/status,
+   assurance claim/owner/dataset/directions/MEIs, experiment and analysis plans,
+   policy snapshot, reproduction command, and comparison digests
 
 ✅ Console and Markdown reporters — table-format console output; GitHub-flavored
    Markdown for job summaries and PR comments
@@ -72,6 +78,12 @@ Status key: ✅ done · 🚧 in progress · ⬜ not started
 ---
 
 ## Phase 3 — Developer experience
+
+⬜ Same-worker randomized-block and interleaved control/candidate reference
+   designs, with paired estimators and carryover reset hooks
+
+⬜ Calibration command and retained A/A/injected-regression decision curves for
+   false-decision rate, rerun stability, and power at each declared MEI
 
 ⬜ `perfgate accept` — mark a known-regression comparison as accepted so the
    next default-branch run becomes the new reference without manual file moves

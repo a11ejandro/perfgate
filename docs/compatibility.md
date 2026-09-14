@@ -41,8 +41,9 @@ Closing this gap means:
 Being in the target matrix is necessary but not sufficient for two
 runs to be compared. `Fingerprints::Compatibility` (Milestone 3) is
 the actual gate: it compares Ruby engine/version, Rails version,
-Perfgate's own major version, database adapter/version, and the
-workload's own definition and dataset hashes, and marks a comparison
+Perfgate's own major version, database adapter/version, dependency lockfile,
+database schema, instrumentation plan, and the workload's source-aware
+definition and dataset hashes, and marks a comparison
 `incompatible` if any of the "strict" fields differ. The matrix above
 describes what Perfgate is *tested against* -- the fingerprint
 mechanism is what protects a specific comparison from ever silently

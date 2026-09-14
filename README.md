@@ -4,8 +4,9 @@ Perfgate is an open-source, CI-native performance assurance tool for Ruby on
 Rails applications. It converts selected RSpec examples into repeatable
 performance workloads, measures application-level signals (duration, SQL
 activity, allocations, GC), compares a pull request against a compatible
-default-branch baseline, and produces a clear PASS/WARN/FAIL merge-gate
-decision.
+default-branch baseline, and produces auditable PASS/WARN/FAIL/INCONCLUSIVE/
+INCOMPARABLE evidence. It runs in advisory mode until a team explicitly opts
+into blocking after validating the decision rule in its own CI environment.
 
 > Did this change introduce a material, reproducible performance regression?
 
@@ -19,11 +20,27 @@ gem "perfgate", group: :test
 
 ## Usage
 
-Tag an RSpec example with `perfgate: true` and wrap the part you want
-measured in `Perfgate.measure`:
+Declare the dataset used by the workload in `perfgate.yml`:
+
+```yaml
+dataset:
+  id: checkout-fixtures
+  schema_version: "1"
+  generator_version: "2026-09"
+  seed: 12345
+  scale: small
+  cache_state: cold
+```
+
+Then tag an RSpec example with an explicit assurance claim and owner, and wrap
+the part you want measured in `Perfgate.measure`:
 
 ```ruby
-RSpec.describe "Checkout", type: :request, perfgate: true do
+RSpec.describe "Checkout", type: :request,
+          perfgate: {
+            claim: "Checkout latency and database work do not materially deteriorate",
+            owner: "payments-platform@example.com"
+          } do
   it "creates an order" do
     sign_in(create(:user))
     cart = create(:cart, :with_line_items)
@@ -59,6 +76,11 @@ it can be published as a GitHub Actions job summary. See
 [examples/rails-rspec-app](examples/rails-rspec-app) for a full example
 workflow, including the artifact download/upload steps that carry a baseline
 result between CI runs.
+
+The default `policy.mode: advisory` reports a supported regression without
+failing CI. Set `policy.mode: blocking` only after A/A trials and injected-
+regression trials demonstrate acceptable false-decision rates and power for
+your workload, runner, sample count, thresholds, and reference design.
 
 ## Docs
 

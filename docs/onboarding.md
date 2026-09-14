@@ -19,20 +19,36 @@ gem "perfgate", path: "../baseline", group: :test # or a git ref, until publishe
 bundle install
 ```
 
-No `perfgate.yml` is required to get started -- a missing config file
-is treated as pure defaults (8 samples, 2 warmup iterations, all
-metrics enabled). Add one later once you want to tune thresholds or
-policy.
+A missing `perfgate.yml` is accepted for exploratory runs, but its missing
+dataset provenance makes comparisons INCOMPARABLE. Create the smallest useful
+declaration before comparing runs:
+
+```yaml
+dataset:
+  id: checkout-fixtures
+  schema_version: "1"
+  generator_version: "2026-09"
+  seed: 12345
+  scale: small
+  cache_state: cold
+```
+
+The remaining defaults are 8 measured samples, 2 warmup iterations, a
+seven-day maximum age for a historical baseline, and advisory policy mode.
 
 ## 2. Tag your first workload
 
 Pick one existing request spec, job spec, or similar RSpec example
-that exercises a code path you care about. Add `perfgate: true` to its
-metadata, and wrap only the part you want measured in
-`Perfgate.measure`:
+that exercises a code path you care about. Add a `perfgate` metadata hash with
+the claim the workload supports and the responsible owner, and wrap only the
+part you want measured in `Perfgate.measure`:
 
 ```ruby
-RSpec.describe "Checkout", type: :request, perfgate: true do
+RSpec.describe "Checkout", type: :request,
+          perfgate: {
+            claim: "Checkout latency and database work do not materially deteriorate",
+            owner: "payments-platform@example.com"
+          } do
   it "creates an order" do
     sign_in(create(:user))
     cart = create(:cart, :with_line_items)
@@ -60,7 +76,7 @@ for a request-spec and a job-spec example side by side.
 bundle exec perfgate run --output .perfgate/current
 ```
 
-This discovers every `perfgate: true`-tagged example, runs its warmup
+This discovers every `perfgate`-tagged example, runs its warmup
 + samples in an isolated process, and writes a versioned result bundle
 to `.perfgate/current/runs/<run-id>/`.
 
@@ -76,9 +92,9 @@ bundle exec perfgate compare \
   --output .perfgate/comparisons
 ```
 
-You'll get a console report with a PASS/WARN/FAIL decision per metric,
-an overall decision, and a nonzero exit code on FAIL -- see the report
-format in the main [README](../README.md#usage).
+You'll get a console report with an effect estimate, interval, sample counts,
+MEI decision rule, metric outcome, comparability details, and overall policy
+outcome. Advisory mode exits zero even when the evidence outcome is FAIL.
 
 ## 5. Wire up CI
 
@@ -100,17 +116,34 @@ it.
 
 ## 6. Reading your first result
 
-- **PASS**: no metric regressed beyond its configured threshold with
-  statistical confidence. Merge as usual.
-- **WARN**: something changed, but not enough to be treated as a
-  blocking regression (e.g. a metric moved but wasn't statistically
-  significant, or the workload/environment changed in a way the
-  default policy doesn't block on). Worth a look, not a blocker.
-- **FAIL**: a metric both changed by more than its practical threshold
-  *and* is statistically significant given the sample noise. The
-  console/Markdown report's "Likely signal" line names the most
-  probable contributing metric (e.g. "SQL query count increased by
-  5") -- it's a deterministic hint, not a root-cause diagnosis.
+- **PASS**: the upper uncertainty bound excludes the configured warning MEI.
+- **WARN**: the point estimate suggests deterioration or policy has a
+  reservation, but the evidence does not support a blocking result.
+- **FAIL**: the lower uncertainty bound exceeds the configured failure MEI
+  (or a stable deterministic metric crosses its failure rule).
+- **INCONCLUSIVE**: the comparison is valid in principle but is underpowered,
+  unstable, missing observations, or interrupted by an execution error.
+- **INCOMPARABLE**: required provenance is missing or important conditions or
+  the workload definition changed.
+
+The "Likely signal" line is a deterministic hint, not a root-cause diagnosis.
+
+## 7. Opt into blocking only after calibration
+
+Perfgate defaults to `policy.mode: advisory`. Before changing it, run repeated
+A/A trials and injected regressions through the same CI workflow. Confirm an
+acceptable suite-level false-FAIL rate, rerun stability, and power at each
+declared minimum effect. Then opt in explicitly:
+
+```yaml
+policy:
+  mode: blocking
+```
+
+The current implementation uses an independent historical-baseline design. It
+records that design in every result, enforces baseline age and fingerprints,
+and uses a Bonferroni-adjusted bootstrap interval, but it does not provide the
+stronger same-worker interleaved control/candidate design.
 
 ## Getting help
 
