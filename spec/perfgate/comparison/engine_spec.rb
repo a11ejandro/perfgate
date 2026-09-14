@@ -8,19 +8,15 @@ RSpec.describe Perfgate::Comparison::Engine do
   let(:config) { Perfgate::Config.default }
 
   let(:fingerprint) do
-    {
-      "ruby_engine" => "ruby", "ruby_version" => "3.2.2", "rails_version" => "7.1.0",
-      "baseline_version_major" => "0", "database_adapter" => "SQLite", "database_version_major" => "3",
-      "dataset_hash" => "sha256:abc", "operating_system" => "darwin23", "cpu_model" => "Apple M2",
-      "cpu_count" => "8", "memory_bytes" => nil, "ci_provider" => "github_actions",
-      "runner_image" => "ubuntu-22.04", "dependency_lock_hash" => "sha256:def"
-    }
+    methodology_fingerprint
   end
 
   def workload(id:, samples:, definition_hash: "sha256:same")
     duration_samples = samples.map { |v| { "duration_ns" => v } }
     {
       "id" => id, "status" => "completed", "error" => nil, "definition_hash" => definition_hash,
+      "assurance" => methodology_assurance,
+      "source" => methodology_source,
       "samples" => duration_samples,
       "summary" => { "duration_ns" => Perfgate::Statistics::Summary.call(samples) }
     }
@@ -28,8 +24,9 @@ RSpec.describe Perfgate::Comparison::Engine do
 
   def run(run_id:, workloads:, fingerprint_overrides: {})
     {
-      "schema_version" => 1, "run_id" => run_id, "created_at" => "2024-01-01T00:00:00Z",
-      "fingerprint" => fingerprint.merge(fingerprint_overrides), "workloads" => workloads
+      "schema_version" => 2, "run_id" => run_id, "created_at" => "2024-01-01T00:00:00Z",
+      "fingerprint" => fingerprint.merge(fingerprint_overrides), "experiment_plan" => methodology_experiment_plan,
+      "workloads" => workloads
     }
   end
 
@@ -99,6 +96,82 @@ RSpec.describe Perfgate::Comparison::Engine do
       result = described_class.compare(baseline_run: baseline_run, candidate_run: candidate_run, config: config)
 
       expect(result["workloads"].first["decision"]).to eq("removed_workload")
+    end
+
+
+    it "propagates underpowered metric evidence to an overall inconclusive result" do
+      samples = [100_000_000, 101_000_000]
+      baseline_run = run(run_id: "base", workloads: [workload(id: "w1", samples: samples)])
+      candidate_run = run(run_id: "cand", workloads: [workload(id: "w1", samples: samples)])
+
+      result = described_class.compare(baseline_run: baseline_run, candidate_run: candidate_run, config: config)
+
+      expect(result["decision"]).to eq("inconclusive")
+      expect(result.dig("workloads", 0, "metrics", "duration", "baseline_sample_size")).to eq(2)
+    end
+
+    it "is inconclusive when compatible runs contain no workloads" do
+      result = described_class.compare(
+        baseline_run: run(run_id: "base", workloads: []),
+        candidate_run: run(run_id: "cand", workloads: []), config: config
+      )
+
+      expect(result["decision"]).to eq("inconclusive")
+    end
+
+    it "marks a workload incomparable when its assurance contract is missing" do
+      baseline_workload = workload(id: "w1", samples: stable_samples).merge("assurance" => {})
+      candidate_workload = workload(id: "w1", samples: stable_samples).merge("assurance" => {})
+
+      result = described_class.compare(
+        baseline_run: run(run_id: "base", workloads: [baseline_workload]),
+        candidate_run: run(run_id: "cand", workloads: [candidate_workload]), config: config
+      )
+
+      expect(result["decision"]).to eq("incomparable")
+      expect(result.dig("workloads", 0, "decision")).to eq("incomparable")
+    end
+
+
+    it "treats a missing metric observation as inconclusive instead of silently skipping it" do
+      baseline_workload = workload(id: "w1", samples: stable_samples)
+      candidate_workload = workload(id: "w1", samples: stable_samples)
+      candidate_workload["samples"] = Array.new(stable_samples.size) { {} }
+
+      result = described_class.compare(
+        baseline_run: run(run_id: "base", workloads: [baseline_workload]),
+        candidate_run: run(run_id: "cand", workloads: [candidate_workload]), config: config
+      )
+
+      expect(result["decision"]).to eq("inconclusive")
+      expect(result.dig("workloads", 0, "metrics", "duration", "rule")).to include("observations missing")
+    end
+
+
+    it "preserves a candidate execution error as inconclusive evidence" do
+      baseline_workload = workload(id: "w1", samples: stable_samples)
+      candidate_workload = workload(id: "w1", samples: []).merge("status" => "error", "error" => "boom")
+
+      result = described_class.compare(
+        baseline_run: run(run_id: "base", workloads: [baseline_workload]),
+        candidate_run: run(run_id: "cand", workloads: [candidate_workload]), config: config
+      )
+
+      expect(result["decision"]).to eq("inconclusive")
+      expect(result.dig("workloads", 0)).to include("decision" => "inconclusive", "execution_error" => true)
+    end
+
+    it "rejects a stale historical baseline" do
+      baseline_run = run(run_id: "base", workloads: [workload(id: "w1", samples: stable_samples)])
+      candidate_run = run(run_id: "cand", workloads: [workload(id: "w1", samples: stable_samples)])
+      candidate_run["created_at"] = "2024-01-09T00:00:01Z"
+
+      result = described_class.compare(baseline_run: baseline_run, candidate_run: candidate_run, config: config)
+
+      expect(result["decision"]).to eq("incompatible")
+      expect(result.dig("compatibility", "differences")).to include(
+        hash_including("field" => "baseline_age_seconds", "reason" => "stale")
+      )
     end
   end
 end

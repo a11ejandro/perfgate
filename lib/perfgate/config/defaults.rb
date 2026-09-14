@@ -18,7 +18,20 @@ module Perfgate
           seed: 12_345,
           order: "defined",
           fail_fast: false,
-          isolation: "process_per_workload"
+          isolation: "process_per_workload",
+          reference_design: "historical_stored_baseline"
+        },
+        dataset: {
+          id: nil,
+          schema_version: nil,
+          generator_version: nil,
+          seed: nil,
+          scale: nil,
+          cardinality: nil,
+          skew: nil,
+          null_rates: nil,
+          relationships: nil,
+          cache_state: nil
         },
         metrics: {
           duration: { enabled: true },
@@ -31,12 +44,10 @@ module Perfgate
         comparison: {
           minimum_samples: 5,
           confidence_level: 0.95,
-          # How much of a metric's own noise (MAD relative to its median)
-          # we tolerate before treating a would-be "fail" as unreliable
-          # and downgrading it to "warn" instead (spec 16.5). The spec
-          # calls for noise-aware downgrading but doesn't name a default
-          # ratio, so 0.5 (MAD up to half the median) was chosen as a
-          # conservative starting point pending real-world tuning.
+          multiple_comparison_method: "bonferroni",
+          max_baseline_age_seconds: 604_800,
+          # MAD relative to the baseline median is retained as a diagnostic.
+          # The interval, rather than this flag, drives the decision.
           noise_ratio_threshold: 0.5,
           practical_thresholds: {
             duration: { warning_percent: 10, failure_percent: 20, minimum_absolute_ms: 10 },
@@ -46,7 +57,9 @@ module Perfgate
           }
         },
         policy: {
+          mode: "advisory",
           fail_on: "fail",
+          inconclusive: "warn",
           incompatible: "warn",
           missing_baseline: "warn",
           new_workload: "warn",
@@ -56,10 +69,11 @@ module Perfgate
           strict: %w[
             ruby_engine ruby_version rails_version baseline_version_major
             database_adapter database_version_major workload_definition_hash dataset_hash
+            dependency_lock_hash schema_hash instrumentation_hash
           ],
           informational: %w[
             operating_system cpu_model cpu_count memory_bytes
-            ci_provider runner_image dependency_lock_hash
+            kernel_release ci_provider runner_image executor_identity
           ]
         },
         storage: { adapter: "filesystem", path: ".perfgate" },

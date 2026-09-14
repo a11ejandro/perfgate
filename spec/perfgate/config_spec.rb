@@ -10,6 +10,8 @@ RSpec.describe Perfgate::Config do
       expect(config.execution_samples).to eq(8)
       expect(config.execution_warmup).to eq(2)
       expect(config.storage_path).to eq(".perfgate")
+      expect(config.policy[:mode]).to eq("advisory")
+      expect(config.comparison_max_baseline_age_seconds).to eq(604_800)
     end
 
     it "only includes metrics that default to enabled" do
@@ -93,6 +95,28 @@ RSpec.describe Perfgate::Config do
           config = described_class.load(path)
           expect(config.execution_samples).to eq(15)
         end
+      end
+    end
+
+
+    it "does not allow required comparability provenance to be disabled" do
+      Dir.mktmpdir do |dir|
+        path = File.join(dir, "perfgate.yml")
+        File.write(path, "fingerprint:\n  strict: [ruby_version]\n")
+
+        expect { described_class.load(path) }.to raise_error(Perfgate::ConfigurationError, /cannot omit/)
+      end
+    end
+
+    it "rejects invalid execution seeds and baseline ages" do
+      Dir.mktmpdir do |dir|
+        seed_path = File.join(dir, "seed.yml")
+        age_path = File.join(dir, "age.yml")
+        File.write(seed_path, "execution:\n  seed: nope\n")
+        File.write(age_path, "comparison:\n  max_baseline_age_seconds: 0\n")
+
+        expect { described_class.load(seed_path) }.to raise_error(Perfgate::ConfigurationError, /seed/)
+        expect { described_class.load(age_path) }.to raise_error(Perfgate::ConfigurationError, /baseline_age/)
       end
     end
   end

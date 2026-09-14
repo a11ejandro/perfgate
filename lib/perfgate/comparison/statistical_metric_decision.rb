@@ -2,50 +2,65 @@
 
 require_relative "metric_change"
 require_relative "../statistics/mann_whitney_u"
+require_relative "../statistics/bootstrap_interval"
 
 module Perfgate
   module Comparison
     # Statistical decision path used for continuous, noisy metrics
-    # (duration, sql_duration, allocations): combines a practical
-    # threshold check with a one-sided Mann-Whitney U test, and
-    # downgrades a would-be fail to a warn when the metric is noisy
-    # (spec sections 16.3-16.5).
+    # (duration, sql_duration, allocations): combines directional
+    # materiality thresholds with an independent-sample bootstrap
+    # interval for median change. Mann-Whitney U is recorded only as a
+    # distributional diagnostic; its p-value does not drive the verdict.
     module StatisticalMetricDecision
       module_function
 
-      def call(metric, baseline_samples, candidate_samples, config)
+      def call(metric, baseline_samples, candidate_samples, config, family_size: 1)
         change = MetricChange.summarize(metric, baseline_samples, candidate_samples)
         thresholds = threshold_for(metric, config)
         p_value = Statistics::MannWhitneyU.one_sided_p(baseline_samples, candidate_samples)
-
-        significance = significance_flags(change, thresholds, p_value, config)
+        confidence_level = family_adjusted_confidence(config.comparison_confidence_level, family_size)
+        interval = Statistics::BootstrapInterval.median_change(
+          baseline_samples, candidate_samples, confidence_level: confidence_level, identity: metric.to_s
+        )
         noisy = MetricChange.noisy?(change[:baseline_summary], config)
-        decision = decide(significance[:exceeds_failure], significance[:statistically_significant],
-                          significance[:practically_significant], noisy)
+        practical = breaches_values?(change[:absolute_change], change[:change_percent],
+                                     thresholds[:warning_percent], thresholds[:minimum_absolute])
+        decision = decide(change, interval, thresholds, practical)
+        rule = rule_for(decision, confidence_level, thresholds, family_size)
 
-        MetricChange.result(change, confidence: (1 - p_value).round(4),
-                                    practically_significant: significance[:practically_significant], noisy: noisy,
+        MetricChange.result(change, interval: interval, p_value: p_value.round(6), thresholds: thresholds,
+                                    rule: rule, practically_significant: practical, noisy: noisy,
                                     decision: decision)
       end
 
-      def significance_flags(change, thresholds, p_value, config)
-        alpha = 1 - config.comparison_confidence_level
-        clears_floor = change[:absolute_change].abs >= thresholds[:minimum_absolute]
-        {
-          practically_significant: breaches?(change, thresholds[:warning_percent], thresholds[:minimum_absolute]),
-          exceeds_failure: breaches?(change, thresholds[:failure_percent], thresholds[:minimum_absolute]),
-          statistically_significant: clears_floor && change[:absolute_change].positive? && p_value < alpha
-        }
+      def decide(change, interval, thresholds, practical)
+        return "inconclusive" unless interval && interval["percent"]
+
+        lower_absolute = interval.dig("absolute", "lower")
+        lower_percent = interval.dig("percent", "lower")
+        upper_absolute = interval.dig("absolute", "upper")
+        upper_percent = interval.dig("percent", "upper")
+
+        return "fail" if breaches_values?(lower_absolute, lower_percent,
+                                           thresholds[:failure_percent], thresholds[:minimum_absolute])
+        return "pass" unless breaches_values?(upper_absolute, upper_percent,
+                                               thresholds[:warning_percent], thresholds[:minimum_absolute])
+
+        practical && change[:absolute_change].positive? ? "warn" : "inconclusive"
       end
 
-      def decide(exceeds_failure, statistically_significant, practically_significant, noisy)
-        if exceeds_failure && statistically_significant
-          noisy ? "warn" : "fail"
-        elsif practically_significant || statistically_significant
-          "warn"
-        else
-          "pass"
-        end
+      def family_adjusted_confidence(confidence_level, family_size)
+        return confidence_level if family_size <= 1
+
+        1.0 - ((1.0 - confidence_level) / family_size)
+      end
+
+      def rule_for(decision, confidence_level, thresholds, family_size)
+        adjustment = family_size > 1 ? "Bonferroni family size #{family_size}; " : ""
+        "#{adjustment}#{(confidence_level * 100).round(3)}% bootstrap interval; " \
+          "PASS upper bound below warning MEI, FAIL lower bound above failure MEI; result=#{decision}; " \
+          "warning=#{thresholds[:warning_percent]}%, failure=#{thresholds[:failure_percent]}%, " \
+          "absolute floor=#{thresholds[:minimum_absolute]}"
       end
 
       def threshold_for(metric, config)
@@ -67,8 +82,11 @@ module Perfgate
         raw[:minimum_absolute] || 0
       end
 
-      def breaches?(change, percent_threshold, minimum_absolute)
-        change[:change_percent].abs >= percent_threshold && change[:absolute_change].abs >= minimum_absolute
+      def breaches_values?(absolute_change, percent_change, percent_threshold, minimum_absolute)
+        return false unless absolute_change&.positive? && percent_change&.positive?
+        return false unless percent_threshold.finite?
+
+        percent_change >= percent_threshold && absolute_change >= minimum_absolute
       end
     end
   end

@@ -16,7 +16,20 @@ module Perfgate
           seed: true,
           order: true,
           fail_fast: true,
-          isolation: true
+          isolation: true,
+          reference_design: true
+        },
+        dataset: {
+          id: true,
+          schema_version: true,
+          generator_version: true,
+          seed: true,
+          scale: true,
+          cardinality: true,
+          skew: true,
+          null_rates: true,
+          relationships: true,
+          cache_state: true
         },
         metrics: {
           duration: { enabled: true },
@@ -29,6 +42,8 @@ module Perfgate
         comparison: {
           minimum_samples: true,
           confidence_level: true,
+          multiple_comparison_method: true,
+          max_baseline_age_seconds: true,
           noise_ratio_threshold: true,
           practical_thresholds: {
             duration: { warning_percent: true, failure_percent: true, minimum_absolute_ms: true },
@@ -38,7 +53,9 @@ module Perfgate
           }
         },
         policy: {
+          mode: true,
           fail_on: true,
+          inconclusive: true,
           incompatible: true,
           missing_baseline: true,
           new_workload: true,

@@ -69,7 +69,7 @@ module Perfgate
     # The default dataset fingerprint hook (spec section 12.3): apps that
     # care about dataset drift affecting comparability can override this
     # with a callable of their own via `Perfgate.configure`.
-    DEFAULT_DATASET_FINGERPRINT = -> { ENV.fetch("PERFGATE_DATASET_VERSION", "unspecified") }
+    DEFAULT_DATASET_FINGERPRINT = -> { ENV["PERFGATE_DATASET_VERSION"] }
 
     attr_reader :to_h
     attr_accessor :dataset_fingerprint
@@ -85,6 +85,22 @@ module Perfgate
 
     def execution_warmup
       to_h.dig(:execution, :warmup)
+    end
+
+    def execution_seed
+      to_h.dig(:execution, :seed)
+    end
+
+    def execution_order
+      to_h.dig(:execution, :order)
+    end
+
+    def execution_fail_fast
+      to_h.dig(:execution, :fail_fast)
+    end
+
+    def execution_reference_design
+      to_h.dig(:execution, :reference_design)
     end
 
     def enabled_metrics
@@ -115,6 +131,14 @@ module Perfgate
 
     def practical_thresholds
       to_h.dig(:comparison, :practical_thresholds)
+    end
+
+    def comparison_max_baseline_age_seconds
+      to_h.dig(:comparison, :max_baseline_age_seconds)
+    end
+
+    def dataset_spec
+      to_h.fetch(:dataset)
     end
 
     def fingerprint_strict_fields

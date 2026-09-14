@@ -37,14 +37,28 @@ module Perfgate
         n1 = baseline.size
         n2 = candidate.size
         u_candidate = candidate_rank_sum(baseline, candidate) - (n2 * (n2 + 1) / 2.0)
-        std_u = standard_deviation_u(n1, n2)
+        std_u = standard_deviation_u(baseline, candidate)
         return nil if std_u.zero?
 
-        (u_candidate - (n1 * n2 / 2.0)) / std_u
+        difference = u_candidate - (n1 * n2 / 2.0)
+        continuity_corrected = if difference.positive?
+                                 difference - 0.5
+                               elsif difference.negative?
+                                 difference + 0.5
+                               else
+                                 0.0
+                               end
+        continuity_corrected / std_u
       end
 
-      def standard_deviation_u(baseline_size, candidate_size)
-        Math.sqrt(baseline_size * candidate_size * (baseline_size + candidate_size + 1) / 12.0)
+      def standard_deviation_u(baseline, candidate)
+        baseline_size = baseline.size
+        candidate_size = candidate.size
+        total_size = baseline_size + candidate_size
+        tie_sum = (baseline + candidate).tally.values.sum { |count| (count**3) - count }
+        tie_adjustment = tie_sum / (total_size * (total_size - 1.0))
+        variance = (baseline_size * candidate_size / 12.0) * ((total_size + 1) - tie_adjustment)
+        Math.sqrt([variance, 0].max)
       end
 
       def candidate_rank_sum(baseline, candidate)

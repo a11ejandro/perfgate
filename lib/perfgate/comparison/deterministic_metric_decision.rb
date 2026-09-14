@@ -14,9 +14,17 @@ module Perfgate
       def call(metric, baseline_samples, candidate_samples, config)
         change = MetricChange.summarize(metric, baseline_samples, candidate_samples)
         thresholds = config.dig(:comparison, :practical_thresholds, metric.to_sym) || {}
-        decision = verdict(change, thresholds)
+        stable = baseline_samples.uniq.one? && candidate_samples.uniq.one?
+        decision = stable ? verdict(change, thresholds) : "inconclusive"
+        rule = if stable
+                 "deterministic exact comparison; warning_absolute=#{thresholds[:warning_absolute] || 0}; " \
+                   "failure_percent=#{thresholds[:failure_percent] || Float::INFINITY}; result=#{decision}"
+               else
+                 "declared deterministic metric varied within a run; result=inconclusive"
+               end
 
-        MetricChange.result(change, confidence: nil, practically_significant: decision != "pass", noisy: false,
+        MetricChange.result(change, interval: nil, p_value: nil, thresholds: thresholds, rule: rule,
+                                    practically_significant: %w[warn fail].include?(decision), noisy: !stable,
                                     decision: decision)
       end
 
@@ -27,7 +35,7 @@ module Perfgate
         return "pass" if change[:absolute_change] <= 0
         return "pass" if change[:absolute_change] < warning_absolute
 
-        change[:change_percent] >= failure_percent ? "fail" : "warn"
+        change[:change_percent] && change[:change_percent] >= failure_percent ? "fail" : "warn"
       end
     end
   end

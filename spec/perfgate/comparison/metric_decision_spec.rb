@@ -25,6 +25,7 @@ RSpec.describe Perfgate::Comparison::MetricDecision do
                                     config: config)
 
       expect(result["decision"]).to eq("inconclusive")
+      expect(result).to include("baseline_sample_size" => 2, "candidate_sample_size" => 2)
     end
 
     it "passes when the candidate is not meaningfully different from the baseline" do
@@ -49,7 +50,7 @@ RSpec.describe Perfgate::Comparison::MetricDecision do
       expect(result["change_percent"]).to be > 0
     end
 
-    it "warns instead of failing when the regressed metric is noisy" do
+    it "does not turn a precise regression into a pass solely because a noise flag is set" do
       noisy_config = Perfgate::Config.default
       noisy_config.to_h[:comparison][:noise_ratio_threshold] = 0.0
 
@@ -60,17 +61,17 @@ RSpec.describe Perfgate::Comparison::MetricDecision do
                                     config: noisy_config)
 
       expect(result["noisy"]).to be true
-      expect(result["decision"]).to eq("warn")
+      expect(result["decision"]).to eq("fail")
     end
 
-    it "warns on a practically significant but not statistically significant change" do
+    it "is inconclusive when uncertainty overlaps the MEI without a material point estimate" do
       baseline = [900, 1100, 950, 1050, 1000, 1080, 920, 1020].map { |v| v * duration_scale }
       candidate = [1000, 1200, 1050, 1150, 1100, 1180, 1020, 1120].map { |v| v * duration_scale }
 
       result = described_class.call(metric: :duration, baseline_samples: baseline, candidate_samples: candidate,
                                     config: config)
 
-      expect(%w[warn fail]).to include(result["decision"])
+      expect(result["decision"]).to eq("inconclusive")
     end
 
     it "does not warn on a change that clears the noise floor by p-value alone but is below the absolute minimum" do
@@ -81,6 +82,18 @@ RSpec.describe Perfgate::Comparison::MetricDecision do
                                     config: config)
 
       expect(result["decision"]).to eq("pass")
+    end
+
+    it "passes a material improvement because thresholds are directional" do
+      baseline = stable_samples(1300)
+      candidate = stable_samples(1000)
+
+      result = described_class.call(metric: :duration, baseline_samples: baseline, candidate_samples: candidate,
+                                    config: config)
+
+      expect(result["change_percent"]).to be < -20
+      expect(result["decision"]).to eq("pass")
+      expect(result.dig("interval", "percent", "upper")).to be < 0
     end
 
     it "compares sql_count deterministically instead of statistically" do
@@ -112,6 +125,23 @@ RSpec.describe Perfgate::Comparison::MetricDecision do
                                     config: config)
 
       expect(result["decision"]).to eq("fail")
+    end
+
+
+    it "is inconclusive when a supposedly deterministic count varies within a run" do
+      result = described_class.call(metric: :sql_count, baseline_samples: [5, 5, 6, 5, 5],
+                                    candidate_samples: [6, 6, 6, 6, 6], config: config)
+
+      expect(result["decision"]).to eq("inconclusive")
+      expect(result["rule"]).to include("varied within a run")
+    end
+
+    it "warns rather than raising when a count increases from a zero baseline" do
+      result = described_class.call(metric: :sql_count, baseline_samples: Array.new(5, 0),
+                                    candidate_samples: Array.new(5, 1), config: config)
+
+      expect(result["decision"]).to eq("warn")
+      expect(result["change_percent"]).to be_nil
     end
   end
 end
